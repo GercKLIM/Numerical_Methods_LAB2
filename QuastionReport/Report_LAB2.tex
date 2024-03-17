@@ -1,0 +1,94 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usepackage[dvips]{graphicx}
+
+\usepackage[oglav,spisok,boldsect,eqwhole,figwhole,hyperref,hyperprint,remarks,greekit]{./style/fn2kursstyle}
+\graphicspath{{./style/}{./figures/}}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{supertabular}
+\usepackage{multicol}
+\usepackage{hhline}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{adjustbox}
+\usepackage{amsmath}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+	language=C++,
+	aboveskip=1mm,
+	belowskip=1mm,
+	showstringspaces=false,
+	columns=flexible,
+	basicstyle={\small},
+	numbers=left,
+	numberstyle=\tiny\color{gray},
+	keywordstyle=\color{red},
+	commentstyle=\color{dkgreen},
+	stringstyle=\color{mauve},
+	breaklines=true,
+	breakatwhitespace=true,
+	tabsize=2
+}
+\title{Численное решение краевых задач для одномерного уравнения теплопроводности \\ Варианты 5, 16}
+
+
+%\authorfirst{О.\,Д.~Климов}
+%\authorsecond{О.\,Д.~Климов} TODO: прописать команды в style.sty
+
+\supervisor{С.\,А.~Конев}
+\group{ФН2-61Б}
+\date{2024}
+
+%\renewcommand{\vec}[1]{\text{\mathversion{bold}${#1}$}}%{\bi{#1}}
+\newcommand\thh[1]{\text{\mathversion{bold}${#1}$}}
+\renewcommand{\labelenumi}{\theenumi)}
+\renewcommand{\labelenumi}{\theenumi)}
+
+\newcommand{\opr}{\textbf{\underline{{Опр.}}}\quad}
+\newcommand{\theorem}{\textbf{\underline{{Теор.}}}\quad}
+\renewcommand{\phi}{\varphi}
+\renewcommand{\k}[1]{\textbf{\textit{#1}}}
+
+\newcounter{mycounter}
+\newcommand{\quastion}[1]{%
+	\stepcounter{mycounter}%
+	\textbf{\themycounter}.  %
+	\textbf{\textit{#1}}
+	
+}
+
+
+\begin{document}
+	\maketitle
+	\section{Ответы на контрольные вопросы}
+	
+	\quastion{Дайте определения терминам: корректно поставленная задача, понятие аппроксимации дифференциальной задачи разностной схемой, порядок аппроксимации, однородная схема, консервативная схема, монотонная схема, устойчивая разностная схема (условно/абсолютно), сходимость.}
+	
+	\quastion{Какие из рассмотренных схем являются абсолютно устойчивыми? Какая из рассмотренных схем позволяет вести расчеты с более крупным шагом по времени?}
+	
+	\quastion{Будет ли смешанная схема иметь второй порядок аппроксимации при $a_i = \frac{2 K(x_i) K(x_{i-1})}{K(x_i) + K(x_{i-1})}$?}
+	\quastion{Какие методы (способы) построения разностной аппроксимации граничных условий (2.5), (2.6) с порядком точности $O(\tau + h^2)$, $O(\tau^2 + h^2)$, $O(\tau^ + h)$ вы знаете?}
+	\quastion{При каких $h$, $\tau$ и $\sigma$ смешанная схема монотонна? Проиллюстрируйте результатами расчетов свойства монотонных и немонотонных разностных схем.}
+	\quastion{Какие ограничения на $h$, $\tau$ и $\sigma$ накладывают условия устойчивости прогонки?}
+	\quastion{В случае $K = K(u)$ чему равно количество внутренних итераций, если итерационный процесс вести до сходимости, а не обрывать после нескольких первых итераций?}
+	\quastion{Для случая K = K(u) предложите способы организации внутреннего итерационного процесса или алгоритмы, заменяющие его.}
+	
+	
+	
+	
+	
+	\clearpage
+	\begin{thebibliography}{1}
+		\bibitem{1} Галанин М.П., Савенков Е.Б. Методы численного анализа математических моделей. М.: Изд-во МГТУ им. Н.Э. Баумана. 2018. 592 с.
+		
+	\end{thebibliography}
+	
+\end{document}

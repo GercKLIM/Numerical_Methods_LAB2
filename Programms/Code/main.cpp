@@ -1,15 +1,14 @@
-// Лабораторная работа №2
+// ### Лабораторная работа №2 ###
 // "Численное решение краевых задач для одномерного уравнения теплопроводности"
-//  Авторы:
+// Authors:
 // @GercKLIM - Климов Олег ФН2-61б
 // @Ship-Vano - Шаманов Иван ФН2-61б
 //
 
-#include <iostream>
-using namespace std;
+#include <iostream>;
 
 int main() {
-    cout << "Hello, world!" << endl;
+    std::cout << "Hello, world!" << std::endl;
     return 0;
 }
 

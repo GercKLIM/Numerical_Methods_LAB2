@@ -1,0 +1,1 @@
+CMakeLists.txt not found in C:\Users\gerce\Documents\WORK DIRECTORY\Численные методы\Лабораторные работы\Numerical_Methods_LAB2 Select CMakeLists.txt

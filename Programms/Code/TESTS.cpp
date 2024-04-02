@@ -15,10 +15,13 @@
 class PDE_data {
 
 public:
+
     double c = 0;    // Удельная теплоемкость    (мб в точке)
     double rho = 0;  // Линейная плотность массы (мб в точке)
     double L = 0;    // Длина стержня
     double T = 0;    // Конец временного интервала
+    bool G_type = 0; // Тип граничных условий (0 - первого рода, 1 - второго рода)
+
 
     /* Получение функции теплопроводности K(x) */
 
@@ -53,18 +56,18 @@ public:
     }
 
     // Функция - Левое граничное условие
-    double G_left(double x) {
+    double G_left(double t) {
         if (myFunction_G_left) {
-            return myFunction_G_left(x);
+            return myFunction_G_left(t);
         } else {
             return 0;
         }
     }
 
     // Функция - Правое граничное условие
-    double G_right(double x) {
+    double G_right(double t) {
         if (myFunction_G_right) {
-            return myFunction_G_right(x);
+            return myFunction_G_right(t);
         } else {
             return 0;
         }
@@ -85,9 +88,12 @@ public:
         std::cout << "G_right is " <<  ((G_right_is_set) ? "set" : "NOT set") << std::endl;
     }
 
+    // Вывод вектора значений класса: заданы ли функции
     std::vector<bool> info(){
-        return {K_is_set, G_left_is_set, G_right_is_set};
+        return {G_type, G_left_is_set, G_right_is_set, K_is_set};
     }
+
+
 private:
     // Хранение лямбда-функции как std::function
     std::function<double(double)> myFunctionK;

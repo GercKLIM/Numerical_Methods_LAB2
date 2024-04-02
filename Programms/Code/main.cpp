@@ -6,8 +6,9 @@
 //
 
 #include <iostream>
-#include "algebra.cpp"
-#include "TESTS.cpp"
+#include "algebra.cpp"  // Алгебра векторов и матриц
+#include "TESTS.cpp"    // Класс условий тестов
+#include "SolvePDE.cpp" // Методы решения PDE
 
 int main() {
 
@@ -29,7 +30,7 @@ int main() {
     test1.set_G_right([](double x) { return x; });
     test1.show(); // Вывод информации о тесте
     //std::cout << test1.info();
-    //std::cout << test1.K(2);
+    //std::cout << "K(2) = " << test1.K(2) << std::endl;
 
     std::cout << std::endl << "Complete!" << std::endl;
 }

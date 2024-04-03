@@ -40,6 +40,7 @@ public:
         }
     }
 
+    std::function<double(double)> K_ptr = [&] (double x) {return K(x);};
 
     /* Получение Граничных условий G_left, G_right*/
 

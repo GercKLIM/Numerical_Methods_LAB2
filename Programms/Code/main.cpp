@@ -34,6 +34,6 @@ int main() {
 
     std::cout << std::endl << "Complete!" << std::endl;
 
-    ExplicitScheme(2, 1, 1);
+    ExplicitScheme(2, 1, 1, test1);
 }
 

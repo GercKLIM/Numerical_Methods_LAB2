@@ -81,21 +81,23 @@ double w(double a, double u_i, double u_im, double h) {
     return a * (u_i-u_im)/h;
 }
 
-bool ExplicitScheme(double tau, double h, double sigma, std::string filename="ExpScheme"){
-    auto K = [](double x) {
-        if(x<5) return 1.;
-        return 2.; };
-    double c = 10;
-    double rho = 4;
-    double t_0 = 0.;
-    double T = 10.;
+bool ExplicitScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ExpScheme"){
+    double c = test.c;
+    double rho = test.rho;
+    double t_0 = 0;
+    double T = test.T;
     double x_0 = 0;
-    double X = 10;
+    double X = test.L;
+
+    // Шаги по времени и пространству
     int num_time_steps = static_cast<int>((T-t_0) / tau);
     int num_space_steps = static_cast<int>((X - x_0)/h);
+
+    // TODO: брать граничное условие из теста (здесь начальная температура)
     double u_0 = 123;
-    double a1 = a(K, x_0, X);
-    std::vector<double> state_0 = init_state(num_space_steps, u_0);
+
+    // Инициализация начального состояния
+    std::vector<double> state_0 = init_state(num_space_steps, u_0); //TODO: расширить init_state
     std::vector<double> As(num_space_steps, 0);
     std::vector<double> Cs(num_space_steps, 0);
     std::vector<double> Bs(num_space_steps, 0);
@@ -109,11 +111,7 @@ bool ExplicitScheme(double tau, double h, double sigma, std::string filename="Ex
     {
         double t_i = t_0;
         std::vector<double> state_i = state_0;
-        //fpoints << t_i << endl;
-        /*writeVectorToFile(fpoints, y_i);*/
         int ind = 0;
-       // std::vector<double> state_ipp = state_0;
-        //writeVectorToFile(fpoints, t_i, y_i);
         writeVectorToFile(fpoints, t_i, state_i);
         double x_i = x_0;
         Cs[0] = 1;
@@ -128,8 +126,8 @@ bool ExplicitScheme(double tau, double h, double sigma, std::string filename="Ex
             t_i += tau;
             for (int i = 1; i < num_space_steps - 1; ++i) {
                 x_i += h;
-                double a_i = a(K, x_i, x_i - h);
-                double a_ip = a(K, x_i + h, x_i);
+                double a_i = a(test.K_ptr, x_i, x_i - h);
+                double a_ip = a(test.K_ptr, x_i + h, x_i);
                 As[i] = sigma / h * a_i;
                 Bs[i] = sigma / h * a_ip;
                 Cs[i] = As[i] + Bs[i] + c * rho * h / tau;

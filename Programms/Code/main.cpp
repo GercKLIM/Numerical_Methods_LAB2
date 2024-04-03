@@ -23,8 +23,8 @@ int main() {
     PDE_data test1;
     test1.c = 1;
     test1.rho = 1;
-    test1.L = 1;
-    test1.T = 1;
+    test1.L = 10;
+    test1.T = 10;
     test1.set_K([](double x) { return x; });
     test1.set_G_left([](double x) { return x; });
     test1.set_G_right([](double x) { return x; });

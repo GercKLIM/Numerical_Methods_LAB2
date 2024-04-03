@@ -6,7 +6,7 @@
 //
 
 #include <iostream>
-#include "algebra.cpp"  // Алгебра векторов и матриц
+#include "algebra.h"  // Алгебра векторов и матриц
 #include "TESTS.cpp"    // Класс условий тестов
 #include "SolvePDE.cpp" // Методы решения PDE
 
@@ -33,5 +33,7 @@ int main() {
     //std::cout << "K(2) = " << test1.K(2) << std::endl;
 
     std::cout << std::endl << "Complete!" << std::endl;
+
+    ExplicitScheme(2, 1, 1);
 }
 

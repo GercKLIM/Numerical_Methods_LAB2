@@ -31,7 +31,7 @@ int main() {
     test1.set_G_right([](double x) { return 15.; });
     test1.G_right_type = false;
     test1.set_init_func([](double x){ return 1.; });
-    ExplicitScheme(2., 1., 1., test1);
+    ExplicitScheme(2., 1., 0., test1);
     //test1.show(); // Вывод информации о тесте
 
     // Тест: Вариант 5

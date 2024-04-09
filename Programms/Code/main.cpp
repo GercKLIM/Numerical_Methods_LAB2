@@ -60,11 +60,15 @@ int main() {
     });
 
     test5.set_G_left([](double x) { return 0.2; });
-    test5.set_G_right([](double x) { return 10; });
+    test5.G_left_type = false;
+    test5.set_G_right([](double x) { return 10.; });
+    test5.G_right_type = false;
 
+    // начальная температура по всему стержню
+    test5.set_init_func([](double x){ return 300.; });
     /* Случай 1. */
-    //ExplicitScheme(2, 1, 1, test1);
-    SolvePDE_1(test5, 0.01, 0.01, 0.1, "ExpScheme_test5");
+    ExplicitScheme(0.0001, 0.01, 0.5, test5);
+    SolvePDE_1(test5, 0.01, 0.1, 0.5, "ExpScheme_test5");
 
 
 

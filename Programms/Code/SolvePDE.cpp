@@ -62,6 +62,18 @@ std::vector<double> init_state(int n, double u0)
     return result;
 }
 
+std::vector<double> init_state(int n, double h, PDE_data& test)
+{
+    std::vector<double> result(n,0);
+    double x_i = 0;
+    for(int i = 0; i < n; ++i)
+    {
+        result[i] = test.initFunction(x_i);
+        x_i += h;
+    }
+    return result;
+}
+
 double left_point_state(double u0){
     return u0;
 }
@@ -95,11 +107,9 @@ bool ExplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
     int num_time_steps = static_cast<int>((T-t_0) / tau);
     int num_space_steps = static_cast<int>((X - x_0)/h);
 
-    // TODO: брать граничное условие из теста (здесь начальная температура)
-    double u_0 = 123;
-
     // Инициализация начального состояния
-    std::vector<double> state_0 = init_state(num_space_steps, u_0); //TODO: расширить init_state
+    //std::vector<double> state_0 = init_state(num_space_steps, u_0); //TODO: расширить init_state
+    std::vector<double> state_0 = init_state(num_space_steps, h, test);
     std::vector<double> As(num_space_steps, 0);
     std::vector<double> Cs(num_space_steps, 0);
     std::vector<double> Bs(num_space_steps, 0);
@@ -119,11 +129,11 @@ bool ExplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
         Cs[0] = 1;
         Bs[0] = 0;
         As[0] = 0;
-        Fs[0] = u_0;
+        Fs[0] = state_0[0];
         Bs[num_space_steps-1] = 0;
         As[num_space_steps-1] = 0;
         Cs[num_space_steps-1] = 1;
-        Fs[num_space_steps-1] = u_0;
+        Fs[num_space_steps-1] = state_0[num_space_steps-1];
         for(int j = 0; j < num_time_steps; ++j) {
             t_i += tau;
             for (int i = 1; i < num_space_steps - 1; ++i) {

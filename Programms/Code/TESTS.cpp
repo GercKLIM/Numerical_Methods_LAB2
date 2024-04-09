@@ -22,8 +22,8 @@ public:
     double t0 = 0;  // Начальная температура
     double T = 0;    // Конец временного интервала
     double u0 = 0;   // Начальное условие
-    bool G_type = false; // Тип граничных условий (0 - первого рода, 1 - второго рода)
-
+    bool G_left_type = false; // Тип граничных условий слева (0 - первого рода, 1 - второго рода)
+    bool G_right_type = false; // Тип граничных условий справа (0 - первого рода, 1 - второго рода)
 
     /* Получение функции теплопроводности K(x) */
 
@@ -56,6 +56,12 @@ public:
     void set_G_right(std::function<double(double)> func) {
         myFunction_G_right = func;
         G_right_is_set = true;
+    }
+
+    // Функция для задания начального состояния системы
+    void set_init_func(std::function<double(double)> func){
+        initFunction = func;
+        init_is_set = true;
     }
 
     // Функция - Левое граничное условие
@@ -93,10 +99,12 @@ public:
 
     // Вывод вектора значений класса: заданы ли функции
     std::vector<bool> info(){
-        return {G_type, G_left_is_set, G_right_is_set, K_is_set};
+        return {G_left_type, G_left_is_set, G_right_type, G_right_is_set, K_is_set};
     }
 
 
+public:
+    std::function<double(double)> initFunction;
 private:
     // Хранение лямбда-функции как std::function
     std::function<double(double)> myFunctionK;
@@ -107,4 +115,5 @@ private:
     bool K_is_set = false;
     bool G_left_is_set = false;
     bool G_right_is_set = false;
+    bool init_is_set = false;
 };

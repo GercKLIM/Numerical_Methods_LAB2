@@ -23,4 +23,4 @@
 
 
 /* Функция для решения PDE в случае 1 (по методичке) */
-void SolvePDE_1(PDE_data test, double h, double tau, double sigma, std::string filename);
+//void SolvePDE_1(PDE_data test, double h, double tau, double sigma, std::string filename);

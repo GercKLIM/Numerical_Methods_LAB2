@@ -21,13 +21,17 @@ int main() {
 
     // Создание первого теста
     PDE_data test1;
-    test1.c = 1;
-    test1.rho = 1;
-    test1.L = 10;
-    test1.T = 10;
-    test1.set_K([](double x) { return x; });
-    test1.set_G_left([](double x) { return x; });
-    test1.set_G_right([](double x) { return x; });
+    test1.c = 10.;
+    test1.rho = 1000.;
+    test1.L = 50.;
+    test1.T = 1000.;
+    test1.set_K([](double x) { return 1000.; });
+    test1.set_G_left([](double x) { return 15.; });
+    test1.G_left_type = false;
+    test1.set_G_right([](double x) { return 15.; });
+    test1.G_right_type = false;
+    test1.set_init_func([](double x){ return 1.; });
+    ExplicitScheme(2., 1., 1., test1);
     //test1.show(); // Вывод информации о тесте
 
     // Тест: Вариант 5
@@ -63,12 +67,13 @@ int main() {
     test5.G_left_type = false;
     test5.set_G_right([](double x) { return 10.; });
     test5.G_right_type = false;
-
     // начальная температура по всему стержню
-    test5.set_init_func([](double x){ return 300.; });
-    /* Случай 1. */
-    ExplicitScheme(0.0001, 0.01, 0.5, test5);
-    SolvePDE_1(test5, 0.01, 0.1, 0.5, "ExpScheme_test5");
+    test5.set_init_func([](double x){ return 20.; });
+    //test5 end
+
+    /* Случай test 5. */
+    //ExplicitScheme(0.01, 0.1, 1., test5);
+    //SolvePDE_1(test5, 0.01, 0.1, 0.5, "ExpScheme_test5");
 
 
 

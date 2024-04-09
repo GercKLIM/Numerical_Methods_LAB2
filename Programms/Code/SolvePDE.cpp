@@ -66,11 +66,13 @@ std::vector<double> init_state(int n, double h, PDE_data& test)
 {
     std::vector<double> result(n,0);
     double x_i = 0;
-    for(int i = 0; i < n; ++i)
+    result[0] = test.G_left(x_i);
+    for(int i = 1; i < n-1; ++i)
     {
-        result[i] = test.initFunction(x_i);
         x_i += h;
+        result[i] = test.initFunction(x_i);
     }
+    result[n-1] = test.G_right(x_i+h);
     return result;
 }
 
@@ -84,10 +86,10 @@ double right_point_state(double kappa, double mu, double y_im){
 
 template<typename F>
 double a(F K, double x_i, double x_im){
-    return 0.5 * (K(x_i)+K(x_im));
-    //return K(x_i - 0.5(x_i-x_im));
+   // return 0.5 * (K(x_i)+K(x_im));
+    //return K(x_i - 0.5*(x_i-x_im));
     //return sqrt(K(x_i)*K(x_im));
-    //return 2*K(x_i)*K(x_im) / (K(x_i)+K(x_im));
+    return 2*K(x_i)*K(x_im) / (K(x_i)+K(x_im));
 }
 
 double w(double a, double u_i, double u_im, double h) {
@@ -109,11 +111,11 @@ bool ExplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
 
     // Инициализация начального состояния
     //std::vector<double> state_0 = init_state(num_space_steps, u_0); //TODO: расширить init_state
-    std::vector<double> state_0 = init_state(num_space_steps, h, test);
-    std::vector<double> As(num_space_steps, 0);
-    std::vector<double> Cs(num_space_steps, 0);
-    std::vector<double> Bs(num_space_steps, 0);
-    std::vector<double> Fs(num_space_steps, 0);
+    std::vector<double> state_0 = init_state(num_space_steps+1, h, test);
+    std::vector<double> As(num_space_steps+1, 0);
+    std::vector<double> Cs(num_space_steps+1, 0);
+    std::vector<double> Bs(num_space_steps+1, 0);
+    std::vector<double> Fs(num_space_steps+1, 0);
 
     std::string path = "./OutputData/" + filename;
     std::ofstream fpoints(path);
@@ -126,28 +128,27 @@ bool ExplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
         int ind = 0;
         writeVectorToFile(fpoints, t_i, state_i);
         double x_i = x_0;
-        Cs[0] = 1;
-        Bs[0] = 0;
-        As[0] = 0;
-        Fs[0] = state_0[0];
-        Bs[num_space_steps-1] = 0;
-        As[num_space_steps-1] = 0;
-        Cs[num_space_steps-1] = 1;
-        Fs[num_space_steps-1] = state_0[num_space_steps-1];
-        for(int j = 0; j < num_time_steps; ++j) {
+        for(int j = 0; j <= num_time_steps; ++j) {
             t_i += tau;
-            for (int i = 1; i < num_space_steps - 1; ++i) {
+            Cs[0] = 1.;
+            Bs[0] = 0.;
+            As[0] = 0.;
+            Fs[0] = state_0[0];
+            Bs[num_space_steps] = 0.;
+            As[num_space_steps] = 0.;
+            Cs[num_space_steps] = 1.;
+            Fs[num_space_steps] = state_0[num_space_steps];
+            for (int i = 1; i < num_space_steps; ++i) {
                 x_i += h;
                 double a_i = a(test.K_ptr, x_i, x_i - h);
                 double a_ip = a(test.K_ptr, x_i + h, x_i);
                 As[i] = sigma / h * a_i;
                 Bs[i] = sigma / h * a_ip;
-                Cs[i] = As[i] + Bs[i] + c * rho * h / tau;
-                Fs[i] = c * rho * h / tau * state_i[i] +
-                        (1 - sigma) * (w(a_ip, state_i[i + 1], state_i[i], h) - w(a_i, state_i[i], state_i[i - 1], h));
+                Cs[i] = (As[i] + Bs[i] + c * rho * h / tau);
+                Fs[i] = (c * rho * h / tau * state_i[i] +
+                        (1 - sigma) * (w(a_ip, state_i[i + 1], state_i[i], h) - w(a_i, state_i[i], state_i[i - 1], h)));
+
             }
-            Cs = (-1.) * Cs;
-            Fs = (-1.) * Fs;
             state_i = TridiagonalMatrixAlgorithm(As, Cs, Bs, Fs);
             writeVectorToFile(fpoints, t_i, state_i);
         }

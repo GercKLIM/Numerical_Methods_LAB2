@@ -66,13 +66,18 @@ std::vector<double> init_state(int n, double h, PDE_data& test)
 {
     std::vector<double> result(n,0);
     double x_i = 0;
-    result[0] = test.G_left(x_i);
+    result[0] = test.initFunction(x_i);
+    if(!test.G_left_type)
+        result[0] = test.G_left(x_i);
     for(int i = 1; i < n-1; ++i)
     {
         x_i += h;
         result[i] = test.initFunction(x_i);
     }
-    result[n-1] = test.G_right(x_i+h);
+    x_i+=h;
+    result[n-1] = test.initFunction(x_i);
+    if(!test.G_left_type)
+        result[n-1] = test.G_right(x_i);
     return result;
 }
 
@@ -125,19 +130,42 @@ bool ExplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
     {
         double t_i = t_0;
         std::vector<double> state_i = state_0;
-        int ind = 0;
         writeVectorToFile(fpoints, t_i, state_i);
         double x_i = x_0;
         for(int j = 0; j <= num_time_steps; ++j) {
             t_i += tau;
-            Cs[0] = 1.;
-            Bs[0] = 0.;
-            As[0] = 0.;
-            Fs[0] = state_0[0];
-            Bs[num_space_steps] = 0.;
-            As[num_space_steps] = 0.;
-            Cs[num_space_steps] = 1.;
-            Fs[num_space_steps] = state_0[num_space_steps];
+            if(!test.G_left_type){
+                Cs[0] = 1.;
+                Bs[0] = 0.;
+                As[0] = 0.;
+                Fs[0] = state_0[0];
+            }
+            else {
+                double a0 = a(test.K_ptr, x_0+h, x_0);
+                double w0 = w(a0, state_i[1], state_i[0], h);
+                double kappa = sigma*a0/h / (c*rho*h/(2*tau)+sigma*a0/h);
+                double mu = (c*rho*state_i[0]*h/(2*tau)+sigma*test.G_left(t_i+tau)+(1-sigma)*(test.G_left(t_i)+w0))/(c*rho*h/(2*tau)+sigma*a0/h);
+                Cs[0] = 1.;
+                Bs[0] = 0.;
+                As[0] = kappa;
+                Fs[0] = mu;
+            }
+            if(!test.G_right_type){
+                Bs[num_space_steps] = 0.;
+                As[num_space_steps] = 0.;
+                Cs[num_space_steps] = 1.;
+                Fs[num_space_steps] = state_0[num_space_steps];
+            }
+            else{
+                double am = a(test.K_ptr, X, X-h);
+                double wn = w(am, state_i[num_space_steps], state_i[num_space_steps], h);
+                double kappa = sigma*am/h / (c*rho*h/(2*tau)+sigma*am/h);
+                double mu = (c*rho*state_i[num_space_steps]*h/(2*tau)+sigma*test.G_left(t_i+tau)+(1-sigma)*(test.G_left(t_i)-wn))/(c*rho*h/(2*tau)+sigma*am/h);
+                Cs[0] = 1.;
+                Bs[0] = 0.;
+                As[0] = kappa;
+                Fs[0] = mu;
+            }
             for (int i = 1; i < num_space_steps; ++i) {
                 x_i += h;
                 double a_i = a(test.K_ptr, x_i, x_i - h);

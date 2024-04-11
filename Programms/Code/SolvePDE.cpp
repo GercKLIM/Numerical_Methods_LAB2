@@ -101,8 +101,11 @@ double w(double a, double u_i, double u_im, double h) {
     return a * (u_i-u_im)/h;
 }
 
-// То что написал Ваня
+//*******************IVAN's SANDBOX*************//
+
+// Явная схема (линейное ур-е)
 bool ExplicitScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ExpScheme"){
+    // Физические параметры
     double c = test.c;
     double rho = test.rho;
     double t_0 = 0;
@@ -122,6 +125,7 @@ bool ExplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
     std::vector<double> Bs(num_space_steps+1, 0);
     std::vector<double> Fs(num_space_steps+1, 0);
 
+    // Создание файла
     std::string path = "./OutputData/" + filename;
     std::ofstream fpoints(path);
     std::cout << "log[INFO]: Starting ExplicitScheme" << std::endl;
@@ -132,40 +136,51 @@ bool ExplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
         std::vector<double> state_i = state_0;
         writeVectorToFile(fpoints, t_i, state_i);
         double x_i = x_0;
+
+        // Эволюция системы во времени
         for(int j = 0; j <= num_time_steps; ++j) {
             t_i += tau;
+
+            // Граничные условия слева
+            // 1-го рода
             if(!test.G_left_type){
                 Cs[0] = 1.;
                 Bs[0] = 0.;
                 As[0] = 0.;
                 Fs[0] = state_0[0];
             }
+            // 2-го рода
             else {
                 double a0 = a(test.K_ptr, x_0+h, x_0);
                 double w0 = w(a0, state_i[1], state_i[0], h);
                 double kappa = sigma*a0/h / (c*rho*h/(2*tau)+sigma*a0/h);
-                double mu = (c*rho*state_i[0]*h/(2*tau)+sigma*test.G_left(t_i+tau)+(1-sigma)*(test.G_left(t_i)+w0))/(c*rho*h/(2*tau)+sigma*a0/h);
+                double mu = (c*rho*state_i[0]*h/(2*tau)+sigma*test.G_left(t_i)+(1-sigma)*(test.G_left(t_i-tau)+w0))/(c*rho*h/(2*tau)+sigma*a0/h);
                 Cs[0] = 1.;
                 Bs[0] = 0.;
                 As[0] = kappa;
                 Fs[0] = mu;
             }
+            // Граничные условия справа
+            // 1-го рода
             if(!test.G_right_type){
                 Bs[num_space_steps] = 0.;
                 As[num_space_steps] = 0.;
                 Cs[num_space_steps] = 1.;
                 Fs[num_space_steps] = state_0[num_space_steps];
             }
+            // 2-го рода
             else{
                 double am = a(test.K_ptr, X, X-h);
                 double wn = w(am, state_i[num_space_steps], state_i[num_space_steps], h);
                 double kappa = sigma*am/h / (c*rho*h/(2*tau)+sigma*am/h);
-                double mu = (c*rho*state_i[num_space_steps]*h/(2*tau)+sigma*test.G_left(t_i+tau)+(1-sigma)*(test.G_left(t_i)-wn))/(c*rho*h/(2*tau)+sigma*am/h);
+                double mu = (c*rho*state_i[num_space_steps]*h/(2*tau)+sigma*test.G_left(t_i)+(1-sigma)*(test.G_left(t_i-tau)-wn))/(c*rho*h/(2*tau)+sigma*am/h);
                 Cs[0] = 1.;
                 Bs[0] = 0.;
                 As[0] = kappa;
                 Fs[0] = mu;
             }
+
+            // Обход пространства
             for (int i = 1; i < num_space_steps; ++i) {
                 x_i += h;
                 double a_i = a(test.K_ptr, x_i, x_i - h);
@@ -177,7 +192,9 @@ bool ExplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
                         (1 - sigma) * (w(a_ip, state_i[i + 1], state_i[i], h) - w(a_i, state_i[i], state_i[i - 1], h)));
 
             }
+            // Получение нового состояния системы
             state_i = TridiagonalMatrixAlgorithm(As, Cs, Bs, Fs);
+            // Запись в файл
             writeVectorToFile(fpoints, t_i, state_i);
         }
         fpoints.close();
@@ -189,9 +206,162 @@ bool ExplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
     }
 };
 
+// Итерационный метод решения СЛАУ с трёхдиагональной матрицей
+vector<double> TripleBigRelaxSolve(const vector<double>& a, const vector<double>& b,
+                               const vector<double>& c, const vector<double>& d,
+                               const vector<double>& x_0, double EPS=1e-6)
+{
+    int n = x_0.size();
+    int max_iter = 10000;
+    int iter = 0;
+    double w = 1;
+    //LT w = 1.1;
+    vector<double> x_now(x_0);
+    vector<double> x_prev;
 
+    do
+    {
+        x_prev = x_now;
+        x_now[0] = (d[0] - c[0] * x_prev[1]);
+        x_now[0] *= w;
+        x_now[0] /= b[0];
+        x_now[0] += (1 - w) * x_prev[0];
+        for (int i = 1; i < n-1; ++i)
+        {
+            x_now[i] = d[i];
+            x_now[i] -= a[i] * x_now[i - 1];
+            x_now[i] -= c[i] * x_prev[i + 1];
+            x_now[i] *= w;
+            x_now[i] /= b[i];
+            x_now[i] += (1 - w) * x_prev[i];
+        }
+        x_now[n - 1] = d[n - 1] - a[n - 1] * x_now[n - 2];
+        x_now[n-1] *= w;
+        x_now[n-1] /= b[n-1];
+        x_now[n-1] += (1 - w) * x_prev[n-1];
+        ++iter;
+    } while (norm(x_now - x_prev) > EPS && iter <= max_iter);
 
+    vector<double> an_sol(n, 2);
+    for (int i = 0; i < n; ++i)
+        an_sol[i] -= (i+1) % 2;
+    //for (int i = 0; i < n; ++i)
+    //cout << x_now[i] << endl;
 
+    //Relax_log_info.C_norm = C_norm;
+    //Relax_log_info.aprior = aprior_iters;
+    cout << "Число итераций = " << iter << endl;
+    cout << "Достигнутая точность " << norm(x_now - an_sol) << endl;
+    //Relax_log_info.error_vector = error_vector();
+    //Relax_log_info.error = vec_norm(Relax_log_info.error_vector);
+
+    return x_now;
+}
+
+// Неявная схема (квазилинейное уравнение)
+bool ImplicitScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ImpScheme"){
+    // Физические параметры
+    double c = test.c;
+    double rho = test.rho;
+    double t_0 = 0;
+    double T = test.T;
+    double x_0 = 0;
+    double X = test.L;
+
+    // Шаги по времени и пространству
+    int num_time_steps = static_cast<int>((T-t_0) / tau);
+    int num_space_steps = static_cast<int>((X - x_0)/h);
+
+    // Инициализация начального состояния
+    //std::vector<double> state_0 = init_state(num_space_steps, u_0); //TODO: расширить init_state
+    std::vector<double> state_0 = init_state(num_space_steps+1, h, test);
+    std::vector<double> As(num_space_steps+1, 0);
+    std::vector<double> Cs(num_space_steps+1, 0);
+    std::vector<double> Bs(num_space_steps+1, 0);
+    std::vector<double> Fs(num_space_steps+1, 0);
+
+    // Создание файла
+    std::string path = "./OutputData/" + filename;
+    std::ofstream fpoints(path);
+    std::cout << "log[INFO]: Starting ExplicitScheme" << std::endl;
+    std::cout << "log[INFO]: Opening a file \"" << filename << "\" to write..." << std::endl;
+    if (fpoints.is_open())
+    {
+        double t_i = t_0;
+        std::vector<double> state_i = state_0;
+        writeVectorToFile(fpoints, t_i, state_i);
+        double x_i = x_0;
+
+        // Эволюция системы во времени
+        for(int j = 0; j <= num_time_steps; ++j) {
+            t_i += tau;
+
+            // Граничные условия слева
+            // 1-го рода
+            if(!test.G_left_type){
+                Cs[0] = 1.;
+                Bs[0] = 0.;
+                As[0] = 0.;
+                Fs[0] = state_0[0];
+            }
+                // 2-го рода
+            else {
+                double a0 = a(test.K_ptr, x_0+h, x_0);
+                double w0 = w(a0, state_i[1], state_i[0], h);
+                double kappa = sigma*a0/h / (c*rho*h/(2*tau)+sigma*a0/h);
+                double mu = (c*rho*state_i[0]*h/(2*tau)+sigma*test.G_left(t_i)+(1-sigma)*(test.G_left(t_i-tau)+w0))/(c*rho*h/(2*tau)+sigma*a0/h);
+                Cs[0] = 1.;
+                Bs[0] = 0.;
+                As[0] = kappa;
+                Fs[0] = mu;
+            }
+            // Граничные условия справа
+            // 1-го рода
+            if(!test.G_right_type){
+                Bs[num_space_steps] = 0.;
+                As[num_space_steps] = 0.;
+                Cs[num_space_steps] = 1.;
+                Fs[num_space_steps] = state_0[num_space_steps];
+            }
+                // 2-го рода
+            else{
+                double am = a(test.K_ptr, X, X-h);
+                double wn = w(am, state_i[num_space_steps], state_i[num_space_steps], h);
+                double kappa = sigma*am/h / (c*rho*h/(2*tau)+sigma*am/h);
+                double mu = (c*rho*state_i[num_space_steps]*h/(2*tau)+sigma*test.G_left(t_i)+(1-sigma)*(test.G_left(t_i-tau)-wn))/(c*rho*h/(2*tau)+sigma*am/h);
+                Cs[0] = 1.;
+                Bs[0] = 0.;
+                As[0] = kappa;
+                Fs[0] = mu;
+            }
+
+            // Обход пространства
+            for (int i = 1; i < num_space_steps; ++i) {
+                x_i += h;
+                double a_i = a(test.K_ptr, x_i, x_i - h);
+                double a_ip = a(test.K_ptr, x_i + h, x_i);
+                As[i] = sigma / h * a_i;
+                Bs[i] = sigma / h * a_ip;
+                Cs[i] = (As[i] + Bs[i] + c * rho * h / tau);
+                Fs[i] = (c * rho * h / tau * state_i[i] +
+                         (1 - sigma) * (w(a_ip, state_i[i + 1], state_i[i], h) - w(a_i, state_i[i], state_i[i - 1], h)));
+
+            }
+            // Получение нового состояния системы
+            state_i = TripleBigRelaxSolve(As, Cs, Bs, Fs, state_i);
+            // Запись в файл
+            writeVectorToFile(fpoints, t_i, state_i);
+        }
+        fpoints.close();
+        return true;
+    }
+    else {
+        std::cout << "log[ERROR]: Couldn't open or create a file" << std::endl;
+        return false;
+    }
+};
+
+//*****************************************OLEG's sandbox**********************************//
 // Моя переделка функций Вани:
 
 

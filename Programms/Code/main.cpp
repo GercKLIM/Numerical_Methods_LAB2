@@ -19,7 +19,7 @@ int main() {
 //    std::cout << "Complete!" << std::endl;
 //    return 0;
 
-    // Создание первого теста
+    // Тест 1: фиксированная температура на концах
     PDE_data test1;
     test1.c = 10.;
     test1.rho = 1000.;
@@ -32,8 +32,20 @@ int main() {
     test1.G_right_type = false;
     test1.set_init_func([](double x){ return 1.; });
     ExplicitScheme(2., 1., 0., test1, "test1");
-    //test1.show(); // Вывод информации о тесте
+    test1.show(); // Вывод информации о тесте
 
+    // Тест 2: потоки на концах
+    PDE_data test2;
+    test2.c = 10.;
+    test2.rho = 1000.;
+    test2.L = 50.;
+    test2.T = 1000.;
+    test2.set_K([](double x) { return 1000.; });
+    test2.set_G_left([](double x) { return 15.; });
+    test2.G_left_type = true;
+    test2.set_G_right([](double x) { return 15.; });
+    test2.G_right_type = true;
+    test2.set_init_func([](double x){ return 1.; });
     // Тест: Вариант 5
     PDE_data test5;
     test5.c = 2;

@@ -12,25 +12,39 @@
 #include "Config.h"     // Константы для тестов
 
 int main() {
-    // Тест 1: Медь, фиксированная температура на концах
+    // Тест 1: Алюминий, фиксированная температура на концах
     PDE_data test1;
-    test1.c = COPPER_C;
-    test1.rho = COPPER_RHO;
-    test1.L = 50.;
-    test1.T = 1000.;
-    test1.u0 = 300.;
-    test1.set_K([](double x) { return COPPER_K; });
-    test1.K_type = false; //решаем явным методом
-    //test1.set_K([](double x){return 416.31 - 0.05904*x + 7.0872*1e7/(x*x*x);});
-    //test1.K_type = true; //Решаем неявным методом
-    //test1.set_K([](double x) { return 401*(1+0.003861*(x-293)); });
-    //test1.K_type = true; //решаем неявным методом
+    test1.c = ALUMINUM_C;
+    test1.rho = ALUMINUM_RHO;
+    test1.h = 0.05;
+    test1.L = 1.;
+    test1.tau = 0.009;
+    test1.T = 100.;
+    test1.u0 = 800.;
     test1.set_G_left([&](double x) { return test1.u0; });
     test1.G_left_type = false;
     test1.set_G_right([&](double x) { return test1.u0; });
     test1.G_right_type = false;
-    test1.set_init_func([&](double x){ return test1.u0 + x*(test1.L-x); });
-    ExplicitScheme(2., 1., 0., test1, "test1");
+    test1.set_init_func([&](double x){ return test1.u0-500 - x*(test1.L-x); });
+
+    test1.set_K([&](double x, double u){return 237*(1+0.0034*(u-293));});
+    test1.K_type = true; //Решаем итерационным методом
+    if(!test1.K_type)
+    {
+        FiniteScheme(test1.tau, test1.h,1.,test1,"test1");
+    }
+    else {
+        IterationScheme(test1.tau, test1.h, 0., test1, "test1_iterational");
+    }
+    test1.set_K([&](double x, double u) { return ALUMINUM_K; });
+    test1.K_type = false;
+    if(!test1.K_type)
+    {
+        FiniteScheme(test1.tau, test1.h,1.,test1,"test1");
+    }
+    else {
+        IterationScheme(test1.tau, test1.h, 0., test1, "test1_iterational");
+    }
     test1.show(); // Вывод информации о тесте
 
     // Тест 2: потоки на концах
@@ -39,7 +53,7 @@ int main() {
     test2.rho = 1000.;
     test2.L = 50.;
     test2.T = 1000.;
-    test2.set_K([](double x) { return 1000.; });
+    test2.set_K([](double x, double u) { return 1000.; });
     test2.set_G_left([](double x) { return 15.; });
     test2.G_left_type = true;
     test2.set_G_right([](double x) { return 15.; });
@@ -53,7 +67,7 @@ int main() {
     test5.t0 = 0.5;
     test5.T = 10;
     test5.u0 = 0.2;
-    test5.set_K([](double x) {
+    test5.set_K([](double x, double u) {
 
         double x1 = 0.5, x2 = 2./3.;
         double k1 = 2. , k2 = 0.5;

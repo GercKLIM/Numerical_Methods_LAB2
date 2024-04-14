@@ -81,20 +81,19 @@ std::vector<double> init_state(int n, double h, PDE_data& test)
     return result;
 }
 
-double left_point_state(double u0){
-    return u0;
-}
-
-double right_point_state(double kappa, double mu, double y_im){
-    return kappa * y_im + mu;
-}
-
+// Если температура не передана (т.е. K не зависит т температуры u),
+// то u присваивается фиктивное значение 0 (какая разница, чему равно u, если в формуле для K оно не используется в return)(аргумент есть, но он не участвует в вычислении - сделано для универсальности)
 template<typename F>
-double a(F K, double x_i, double x_im){
+double a(F K, double x_i, double x_im, double u=0){
    // return 0.5 * (K(x_i)+K(x_im));
     //return K(x_i - 0.5*(x_i-x_im));
     //return sqrt(K(x_i)*K(x_im));
-    return 2*K(x_i)*K(x_im) / (K(x_i)+K(x_im));
+
+    // Предотвращаем деление на ноль
+    if(K(x_i, u)+K(x_im, u) != 0)
+        return 2*K(x_i, u)*K(x_im, u) / (K(x_i, u)+K(x_im, u));
+    else
+        return sqrt(K(x_i, u)*K(x_im, u));
 }
 
 double w(double a, double u_i, double u_im, double h) {
@@ -103,8 +102,8 @@ double w(double a, double u_i, double u_im, double h) {
 
 //*******************IVAN's SANDBOX*************//
 
-// Явная схема (линейное ур-е)
-bool ExplicitScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ExpScheme"){
+// Случай 1 (линейное ур-е)
+bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ExpScheme"){
     // Физические параметры
     double c = test.c;
     double rho = test.rho;
@@ -250,16 +249,16 @@ vector<double> TripleBigRelaxSolve(const vector<double>& a, const vector<double>
 
     //Relax_log_info.C_norm = C_norm;
     //Relax_log_info.aprior = aprior_iters;
-    cout << "Число итераций = " << iter << endl;
-    cout << "Достигнутая точность " << norm(x_now - an_sol) << endl;
+    //cout << "Число итераций = " << iter << endl;
+    //cout << "Достигнутая точность " << norm(x_now - an_sol) << endl;
     //Relax_log_info.error_vector = error_vector();
     //Relax_log_info.error = vec_norm(Relax_log_info.error_vector);
 
     return x_now;
 }
 
-// Неявная схема (квазилинейное уравнение)
-bool ImplicitScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ImpScheme"){
+// Случай 2 (квазилинейное уравнение)
+bool IterationScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ImpScheme"){
     // Физические параметры
     double c = test.c;
     double rho = test.rho;
@@ -306,7 +305,7 @@ bool ImplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
             }
                 // 2-го рода
             else {
-                double a0 = a(test.K_ptr, x_0+h, x_0);
+                double a0 = a(test.K_ptr, x_0+h, x_0, state_i[0]);
                 double w0 = w(a0, state_i[1], state_i[0], h);
                 double kappa = sigma*a0/h / (c*rho*h/(2*tau)+sigma*a0/h);
                 double mu = (c*rho*state_i[0]*h/(2*tau)+sigma*test.G_left(t_i)+(1-sigma)*(test.G_left(t_i-tau)+w0))/(c*rho*h/(2*tau)+sigma*a0/h);
@@ -325,7 +324,7 @@ bool ImplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
             }
                 // 2-го рода
             else{
-                double am = a(test.K_ptr, X, X-h);
+                double am = a(test.K_ptr, X, X-h,state_i[num_space_steps]);
                 double wn = w(am, state_i[num_space_steps], state_i[num_space_steps], h);
                 double kappa = sigma*am/h / (c*rho*h/(2*tau)+sigma*am/h);
                 double mu = (c*rho*state_i[num_space_steps]*h/(2*tau)+sigma*test.G_left(t_i)+(1-sigma)*(test.G_left(t_i-tau)-wn))/(c*rho*h/(2*tau)+sigma*am/h);
@@ -338,8 +337,8 @@ bool ImplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
             // Обход пространства
             for (int i = 1; i < num_space_steps; ++i) {
                 x_i += h;
-                double a_i = a(test.K_ptr, x_i, x_i - h);
-                double a_ip = a(test.K_ptr, x_i + h, x_i);
+                double a_i = a(test.K_ptr, x_i, x_i - h, state_i[i]);
+                double a_ip = a(test.K_ptr, x_i + h, x_i, state_i[i+1]);
                 As[i] = sigma / h * a_i;
                 Bs[i] = sigma / h * a_ip;
                 Cs[i] = (As[i] + Bs[i] + c * rho * h / tau);
@@ -364,111 +363,111 @@ bool ImplicitScheme(double tau, double h, double sigma, PDE_data test, std::stri
 //*****************************************OLEG's sandbox**********************************//
 // Моя переделка функций Вани:
 
-
-std::vector<double> progonka(std::vector<double>& a, std::vector<double>& b, std::vector<double>& c, std::vector<double>& d) {
-
-    int n = b.size();
-    std::vector<double> alph(n, 0);
-    std::vector<double> beth(n, 0);
-    std::vector<double> solve(n, 0);
-    double tmp;
-
-    //vectinput();
-    alph[0] = 0;
-    beth[0] = 0;
-    tmp = b[0];
-    alph[1] = c[0] / tmp;
-    beth[1] = d[0] / tmp;
-
-    //std::cout << alph[1] << " " << beth[1] << "\n";
-    for (int i = 1; i < n - 1; i++) {
-        tmp = b[i] - a[i] * alph[i];
-        alph[i + 1] = c[i] / tmp;//(b[i] - a[i] * alph[i]);
-        beth[i + 1] = (d[i] + a[i] * beth[i]) / tmp; // (b[i] - a[i] * alph[i]);
-    }
-
-    solve[n - 1] = (d[n - 1] + a[n - 1] * beth[n - 1]) / (b[n - 1] - a[n - 1] * alph[n - 1]);
-
-    for (int i = n - 2; i >= 0; i--) {
-        solve[i] = alph[i + 1] * solve[i + 1] + beth[i + 1];
-    }
-
-    return solve;
-}
-
-/* Функция для решения PDE в случае 1 (по методичке) */
-bool SolvePDE_1(PDE_data test, double tau, double h, double sigma, std::string filename){
-
-
-    double t_0 = 0; // Начальное время
-    double x_0 = 0; // Начальное условие?
-
-    // Количество шагов по времени и пространству
-    int num_time_steps = static_cast<int>((test.T-t_0) / tau);
-    int num_space_steps = static_cast<int>((test.L - x_0) / h);
-
-    // TODO: брать граничное условие из теста (здесь начальная температура)
-    double u_0 = 10;
-
-    // Инициализация начального состояния
-    std::vector<double> state_0 = init_state(num_space_steps, u_0); //TODO: расширить init_state
-    std::vector<double> As(num_space_steps, 0);
-    std::vector<double> Cs(num_space_steps, 0);
-    std::vector<double> Bs(num_space_steps, 0);
-    std::vector<double> Fs(num_space_steps, 0);
-
-    std::string path = "./OutputData/" + filename + ".txt";
-    std::ofstream fpoints(path);
-    std::cout << "log[INFO]: Starting ExplicitScheme" << std::endl;
-    std::cout << "log[INFO]: Opening a file \"" << filename << "\" to write..." << std::endl;
-
-    if (fpoints.is_open()) {
-
-        double t_i = t_0;
-        std::vector<double> state_i = state_0;
-        int ind = 0;
-        writeVectorToFile(fpoints, t_i, state_i);
-        double x_i = x_0;
-        Cs[0] = 1;
-        Bs[0] = 0;
-        As[0] = 0;
-        Fs[0] = u_0;
-        Bs[num_space_steps-1] = 0;
-        As[num_space_steps-1] = 0;
-        Cs[num_space_steps-1] = 1;
-        Fs[num_space_steps-1] = u_0;
-
-        for (int j = 0; j < num_time_steps; ++j) {
-            t_i += tau;
-
-            for (int i = 1; i < num_space_steps - 1; ++i) {
-                x_i += h;
-
-                //double a_i = a(test.K_ptr, x_i, x_i - h);
-                double a_i = 0.5 * (test.K(x_i) + test.K(x_i - h));
-
-                //double a_ip = a(test.K_ptr, x_i + h, x_i);
-                double a_ip = 0.5 * (test.K(x_i + h) + test.K(x_i - h));
-
-                As[i] = sigma / h * a_i;
-                Bs[i] = sigma / h * a_ip;
-                Cs[i] = As[i] + Bs[i] + test.c * test.rho * h / tau;
-                Fs[i] = test.c * test.rho * h / tau * state_i[i]
-                        + (1 - sigma) * (w(a_ip, state_i[i + 1],
-                                           state_i[i], h) - w(a_i, state_i[i], state_i[i - 1], h));
-            }
-
-            Cs = (-1.) * Cs;
-            Fs = (-1.) * Fs;
-            state_i = progonka(As, Cs, Bs, Fs);
-            writeVectorToFile(fpoints, t_i, state_i);
-        }
-
-        fpoints.close();
-        return true;
-
-    } else {
-        std::cout << "log[ERROR]: Couldn't open or create a file" << std::endl;
-        return false;
-    }
-}
+//
+//std::vector<double> progonka(std::vector<double>& a, std::vector<double>& b, std::vector<double>& c, std::vector<double>& d) {
+//
+//    int n = b.size();
+//    std::vector<double> alph(n, 0);
+//    std::vector<double> beth(n, 0);
+//    std::vector<double> solve(n, 0);
+//    double tmp;
+//
+//    //vectinput();
+//    alph[0] = 0;
+//    beth[0] = 0;
+//    tmp = b[0];
+//    alph[1] = c[0] / tmp;
+//    beth[1] = d[0] / tmp;
+//
+//    //std::cout << alph[1] << " " << beth[1] << "\n";
+//    for (int i = 1; i < n - 1; i++) {
+//        tmp = b[i] - a[i] * alph[i];
+//        alph[i + 1] = c[i] / tmp;//(b[i] - a[i] * alph[i]);
+//        beth[i + 1] = (d[i] + a[i] * beth[i]) / tmp; // (b[i] - a[i] * alph[i]);
+//    }
+//
+//    solve[n - 1] = (d[n - 1] + a[n - 1] * beth[n - 1]) / (b[n - 1] - a[n - 1] * alph[n - 1]);
+//
+//    for (int i = n - 2; i >= 0; i--) {
+//        solve[i] = alph[i + 1] * solve[i + 1] + beth[i + 1];
+//    }
+//
+//    return solve;
+//}
+//
+///* Функция для решения PDE в случае 1 (по методичке) */
+//bool SolvePDE_1(PDE_data test, double tau, double h, double sigma, std::string filename){
+//
+//
+//    double t_0 = 0; // Начальное время
+//    double x_0 = 0; // Начальное условие?
+//
+//    // Количество шагов по времени и пространству
+//    int num_time_steps = static_cast<int>((test.T-t_0) / tau);
+//    int num_space_steps = static_cast<int>((test.L - x_0) / h);
+//
+//    // TODO: брать граничное условие из теста (здесь начальная температура)
+//    double u_0 = 10;
+//
+//    // Инициализация начального состояния
+//    std::vector<double> state_0 = init_state(num_space_steps, u_0); //TODO: расширить init_state
+//    std::vector<double> As(num_space_steps, 0);
+//    std::vector<double> Cs(num_space_steps, 0);
+//    std::vector<double> Bs(num_space_steps, 0);
+//    std::vector<double> Fs(num_space_steps, 0);
+//
+//    std::string path = "./OutputData/" + filename + ".txt";
+//    std::ofstream fpoints(path);
+//    std::cout << "log[INFO]: Starting ExplicitScheme" << std::endl;
+//    std::cout << "log[INFO]: Opening a file \"" << filename << "\" to write..." << std::endl;
+//
+//    if (fpoints.is_open()) {
+//
+//        double t_i = t_0;
+//        std::vector<double> state_i = state_0;
+//        int ind = 0;
+//        writeVectorToFile(fpoints, t_i, state_i);
+//        double x_i = x_0;
+//        Cs[0] = 1;
+//        Bs[0] = 0;
+//        As[0] = 0;
+//        Fs[0] = u_0;
+//        Bs[num_space_steps-1] = 0;
+//        As[num_space_steps-1] = 0;
+//        Cs[num_space_steps-1] = 1;
+//        Fs[num_space_steps-1] = u_0;
+//
+//        for (int j = 0; j < num_time_steps; ++j) {
+//            t_i += tau;
+//
+//            for (int i = 1; i < num_space_steps - 1; ++i) {
+//                x_i += h;
+//
+//                //double a_i = a(test.K_ptr, x_i, x_i - h);
+//                double a_i = 0.5 * (test.K(x_i) + test.K(x_i - h));
+//
+//                //double a_ip = a(test.K_ptr, x_i + h, x_i);
+//                double a_ip = 0.5 * (test.K(x_i + h) + test.K(x_i - h));
+//
+//                As[i] = sigma / h * a_i;
+//                Bs[i] = sigma / h * a_ip;
+//                Cs[i] = As[i] + Bs[i] + test.c * test.rho * h / tau;
+//                Fs[i] = test.c * test.rho * h / tau * state_i[i]
+//                        + (1 - sigma) * (w(a_ip, state_i[i + 1],
+//                                           state_i[i], h) - w(a_i, state_i[i], state_i[i - 1], h));
+//            }
+//
+//            Cs = (-1.) * Cs;
+//            Fs = (-1.) * Fs;
+//            state_i = progonka(As, Cs, Bs, Fs);
+//            writeVectorToFile(fpoints, t_i, state_i);
+//        }
+//
+//        fpoints.close();
+//        return true;
+//
+//    } else {
+//        std::cout << "log[ERROR]: Couldn't open or create a file" << std::endl;
+//        return false;
+//    }
+//}

@@ -16,6 +16,9 @@ class PDE_data {
 
 public:
 
+    double tau;
+    double h;
+
     double c = 0;    // Удельная теплоемкость    (мб в точке)
     double rho = 0;  // Линейная плотность массы (мб в точке)
     double L = 0;    // Длина стержня
@@ -29,21 +32,21 @@ public:
     /* Получение функции теплопроводности K(x) */
 
     // Функция, для присваивания лямбда-функции к функции double K(double)
-    void set_K(std::function<double(double)> func) {
+    void set_K(std::function<double(double, double)> func) {
         myFunctionK = func;
         K_is_set = true;
     }
 
     // Функция - коэффициента теплопроводности
-    double K(double x) {
+    double K(double x, double u) {
         if (myFunctionK) {
-            return myFunctionK(x);
+            return myFunctionK(x, u);
         } else {
             return 0;
         }
     }
 
-    std::function<double(double)> K_ptr = [&] (double x) {return K(x);};
+    std::function<double(double, double)> K_ptr = [&] (double x, double u) {return K(x, u);};
 
     /* Получение Граничных условий G_left, G_right*/
 
@@ -89,10 +92,9 @@ public:
     void show() {
         std::cout << "PDE_data object info:" << std::endl;
         std::cout << "c   = " << c << std::endl;
-        std::cout << "rho = " << c << std::endl;
-        std::cout << "L   = " << c << std::endl;
-        std::cout << "T   = " << c << std::endl;
-        std::cout << "K       is " <<  ((K_is_set) ? "set" : "NOT set") << std::endl;
+        std::cout << "rho = " << rho << std::endl;
+        std::cout << "L   = " << L << std::endl;
+        std::cout << "T   = " << T << std::endl;
         std::cout << "K       is " <<  ((K_is_set) ? "set" : "NOT set") << std::endl;
         std::cout << "G_left  is " <<  ((G_left_is_set) ? "set" : "NOT set") << std::endl;
         std::cout << "G_right is " <<  ((G_right_is_set) ? "set" : "NOT set") << std::endl;
@@ -108,7 +110,7 @@ public:
     std::function<double(double)> initFunction;
 private:
     // Хранение лямбда-функции как std::function
-    std::function<double(double)> myFunctionK;
+    std::function<double(double, double)> myFunctionK;
     std::function<double(double)> myFunction_G_left;
     std::function<double(double)> myFunction_G_right;
 

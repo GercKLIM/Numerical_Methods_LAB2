@@ -9,28 +9,27 @@
 #include "algebra.h"    // Алгебра векторов и матриц
 #include "TESTS.cpp"    // Класс условий тестов
 #include "SolvePDE.cpp" // Методы решения PDE
+#include "Config.h"     // Константы для тестов
 
 int main() {
-
-    // Проверка работы алгебры
-//    std::vector<std::vector<double>> a = create_identity_matrix<double>(2); // Создание единичной матрицы
-//    std::vector<std::vector<double>> b = {{2., 2.}, {2., 2.}};
-//    std::cout << a * b - a << std::endl; // Операции над матрицами и вывод в консоль
-//    std::cout << "Complete!" << std::endl;
-//    return 0;
-
-    // Тест 1: фиксированная температура на концах
+    // Тест 1: Медь, фиксированная температура на концах
     PDE_data test1;
-    test1.c = 10.;
-    test1.rho = 1000.;
+    test1.c = COPPER_C;
+    test1.rho = COPPER_RHO;
     test1.L = 50.;
     test1.T = 1000.;
-    test1.set_K([](double x) { return 1000.; });
-    test1.set_G_left([](double x) { return 15.; });
+    test1.u0 = 300.;
+    test1.set_K([](double x) { return COPPER_K; });
+    test1.K_type = false; //решаем явным методом
+    //test1.set_K([](double x){return 416.31 - 0.05904*x + 7.0872*1e7/(x*x*x);});
+    //test1.K_type = true; //Решаем неявным методом
+    //test1.set_K([](double x) { return 401*(1+0.003861*(x-293)); });
+    //test1.K_type = true; //решаем неявным методом
+    test1.set_G_left([&](double x) { return test1.u0; });
     test1.G_left_type = false;
-    test1.set_G_right([](double x) { return 15.; });
+    test1.set_G_right([&](double x) { return test1.u0; });
     test1.G_right_type = false;
-    test1.set_init_func([](double x){ return 1.; });
+    test1.set_init_func([&](double x){ return test1.u0 + x*(test1.L-x); });
     ExplicitScheme(2., 1., 0., test1, "test1");
     test1.show(); // Вывод информации о тесте
 
@@ -74,7 +73,6 @@ int main() {
 
         }
     });
-
     test5.set_G_left([](double x) { return 0.2; });
     test5.G_left_type = false;
     test5.set_G_right([](double x) { return 10.; });

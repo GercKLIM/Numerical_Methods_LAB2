@@ -12,7 +12,8 @@
 #include "Config.h"     // Константы для тестов
 
 int main() {
-    // Тест 1: Алюминий, фиксированная температура на концах
+
+    // ТЕСТ 1: Алюминий, фиксированная температура на концах
     PDE_data test1;
     test1.c = ALUMINUM_C;
     test1.rho = ALUMINUM_RHO;
@@ -25,29 +26,27 @@ int main() {
     test1.G_left_type = false;
     test1.set_G_right([&](double x) { return test1.u0; });
     test1.G_right_type = false;
-    test1.set_init_func([&](double x){ return test1.u0-500 - x*(test1.L-x); });
+    test1.set_init_func([&](double x){ return test1.u0 - 500 - x * (test1.L - x); });
 
-    test1.set_K([&](double x, double u){return 237*(1+0.0034*(u-293));});
+    test1.set_K([&](double x, double u){return 237 * (1 + 0.0034 * (u - 293));});
     test1.K_type = true; //Решаем итерационным методом
-    if(!test1.K_type)
-    {
+    if(!test1.K_type) {
         FiniteScheme(test1.tau, test1.h,1.,test1,"test1");
-    }
-    else {
+    } else {
         IterationScheme(test1.tau, test1.h, 0., test1, "test1_iterational");
     }
     test1.set_K([&](double x, double u) { return ALUMINUM_K; });
     test1.K_type = false;
-    if(!test1.K_type)
-    {
+    if(!test1.K_type) {
         FiniteScheme(test1.tau, test1.h,1.,test1,"test1");
-    }
-    else {
+    } else {
         IterationScheme(test1.tau, test1.h, 0., test1, "test1_iterational");
     }
     test1.show(); // Вывод информации о тесте
 
-    // Тест 2: потоки на концах
+
+
+    // ТЕСТ 2: потоки на концах
     PDE_data test2;
     test2.c = 10.;
     test2.rho = 1000.;
@@ -59,7 +58,10 @@ int main() {
     test2.set_G_right([](double x) { return 15.; });
     test2.G_right_type = true;
     test2.set_init_func([](double x){ return 1.; });
-    // Тест: Вариант 5
+
+
+
+    /* ТЕСТ 3: Вариант 5 */
     PDE_data test5;
     test5.c = 2;
     test5.rho = 0.25;
@@ -75,13 +77,10 @@ int main() {
 
         if (x <= x1) {
             return k1;
-
         } else if (x < x2) {
             return (k1 * ((x - x2) / (x1 - x2)) + k2 * ((x - x1) / (x2 - x1)));
-
         } else if (x <= L) {
             return k2;
-
         } else {
             return 0.;
 

@@ -23,7 +23,10 @@ void out(vector<LT> vec)
 }
 //TODO: вынести в отдельный файл
 //решение СЛАУ методом правой прогонки
-//A - B + C = -D
+//A x_{i-1} - B x_i + C x_{i+1} = -D  (***)
+// Если векторы диагоналей исходной системы заданы как A,B,C,D (A - диагональ опд главной, B - главная диагональ, C - диагональ над главной, D- правая часть)
+// То для правильного расчёта необходимо передавать A, (-1.)*B, C, (-1.)*D
+// Так как прогонка актуальная для системы (***)
 template<typename DT>
 std::vector<DT> TridiagonalMatrixAlgorithm(
         std::vector<DT> a,
@@ -76,7 +79,7 @@ std::vector<double> init_state(int n, double h, PDE_data& test)
     }
     x_i+=h;
     result[n-1] = test.initFunction(x_i);
-    if(!test.G_left_type)
+    if(!test.G_right_type)
         result[n-1] = test.G_right(x_i);
     return result;
 }
@@ -143,10 +146,10 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
             // Граничные условия слева
             // 1-го рода
             if(!test.G_left_type){
-                Cs[0] = 1.;
+                Cs[0] = -1.;
                 Bs[0] = 0.;
                 As[0] = 0.;
-                Fs[0] = state_0[0];
+                Fs[0] = -state_0[0];
             }
             // 2-го рода
             else {
@@ -154,29 +157,30 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
                 double w0 = w(a0, state_i[1], state_i[0], h);
                 double kappa = sigma*a0/h / (c*rho*h/(2*tau)+sigma*a0/h);
                 double mu = (c*rho*state_i[0]*h/(2*tau)+sigma*test.G_left(t_i)+(1-sigma)*(test.G_left(t_i-tau)+w0))/(c*rho*h/(2*tau)+sigma*a0/h);
-                Cs[0] = 1.;
-                Bs[0] = 0.;
-                As[0] = kappa;
-                Fs[0] = mu;
+                Cs[0] = -1.;
+                Bs[0] = -kappa;
+                As[0] = 0;
+                Fs[0] = -mu;
             }
             // Граничные условия справа
             // 1-го рода
             if(!test.G_right_type){
                 Bs[num_space_steps] = 0.;
                 As[num_space_steps] = 0.;
-                Cs[num_space_steps] = 1.;
-                Fs[num_space_steps] = state_0[num_space_steps];
+                Cs[num_space_steps] = -1.;
+                Fs[num_space_steps] = -state_0[num_space_steps];
             }
             // 2-го рода
             else{
                 double am = a(test.K_ptr, X, X-h);
-                double wn = w(am, state_i[num_space_steps], state_i[num_space_steps], h);
-                double kappa = sigma*am/h / (c*rho*h/(2*tau)+sigma*am/h);
-                double mu = (c*rho*state_i[num_space_steps]*h/(2*tau)+sigma*test.G_left(t_i)+(1-sigma)*(test.G_left(t_i-tau)-wn))/(c*rho*h/(2*tau)+sigma*am/h);
-                Cs[0] = 1.;
-                Bs[0] = 0.;
-                As[0] = kappa;
-                Fs[0] = mu;
+                double wn = w(am, state_i[num_space_steps], state_i[num_space_steps-1], h);
+                double denom = c * rho * h / (2 * tau) + sigma * am / h;
+                double kappa = sigma * am /h / denom;
+                double mu = (c * rho * state_i[num_space_steps] * h / (2 * tau) + sigma * test.G_right(t_i) + (1 - sigma) * (test.G_right(t_i-tau) - wn)) / denom;
+                Cs[num_space_steps] = -1.;
+                Bs[num_space_steps] = 0.;
+                As[num_space_steps] = -kappa;
+                Fs[num_space_steps] = -mu;
             }
 
             // Обход пространства
@@ -186,12 +190,13 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
                 double a_ip = a(test.K_ptr, x_i + h, x_i);
                 As[i] = sigma / h * a_i;
                 Bs[i] = sigma / h * a_ip;
-                Cs[i] = (As[i] + Bs[i] + c * rho * h / tau);
-                Fs[i] = (c * rho * h / tau * state_i[i] +
-                        (1 - sigma) * (w(a_ip, state_i[i + 1], state_i[i], h) - w(a_i, state_i[i], state_i[i - 1], h)));
+                Cs[i] = As[i] + Bs[i] + c * rho * h / tau;
+                Fs[i] = c * rho * h / tau * state_i[i] +
+                        (1 - sigma) * (w(a_ip, state_i[i + 1], state_i[i], h) - w(a_i, state_i[i], state_i[i - 1], h));
 
             }
             // Получение нового состояния системы
+            // A - C + B = - F (не домножаем векторы на -1, так как уже считали домноженные)
             state_i = TridiagonalMatrixAlgorithm(As, Cs, Bs, Fs);
             // Запись в файл
             writeVectorToFile(fpoints, t_i, state_i);
@@ -206,6 +211,9 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
 };
 
 // Итерационный метод решения СЛАУ с трёхдиагональной матрицей
+// A x_{i-1} + B x_i + C x_{i+1} = D
+// Если исходная система задаётся диагоналями,
+// То передавать векторы как они есть (не домножать на -1)
 vector<double> TripleBigRelaxSolve(const vector<double>& a, const vector<double>& b,
                                const vector<double>& c, const vector<double>& d,
                                const vector<double>& x_0, double EPS=1e-6)

@@ -107,6 +107,7 @@ double w(double a, double u_i, double u_im, double h) {
 
 // Случай 1 (линейное ур-е)
 bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ExpScheme"){
+
     // Физические параметры
     double c = test.c;
     double rho = test.rho;
@@ -144,6 +145,7 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
             t_i += tau;
 
             // Граничные условия слева
+
             // 1-го рода
             if(!test.G_left_type){
                 Cs[0] = -1.;
@@ -151,6 +153,7 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
                 As[0] = 0.;
                 Fs[0] = -state_0[0];
             }
+
             // 2-го рода
             else {
                 double a0 = a(test.K_ptr, x_0+h, x_0);
@@ -162,6 +165,7 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
                 As[0] = 0;
                 Fs[0] = -mu;
             }
+
             // Граничные условия справа
             // 1-го рода
             if(!test.G_right_type){
@@ -170,6 +174,7 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
                 Cs[num_space_steps] = -1.;
                 Fs[num_space_steps] = -state_0[num_space_steps];
             }
+
             // 2-го рода
             else{
                 double am = a(test.K_ptr, X, X-h);
@@ -193,18 +198,19 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
                 Cs[i] = As[i] + Bs[i] + c * rho * h / tau;
                 Fs[i] = c * rho * h / tau * state_i[i] +
                         (1 - sigma) * (w(a_ip, state_i[i + 1], state_i[i], h) - w(a_i, state_i[i], state_i[i - 1], h));
-
             }
+
             // Получение нового состояния системы
             // A - C + B = - F (не домножаем векторы на -1, так как уже считали домноженные)
             state_i = TridiagonalMatrixAlgorithm(As, Cs, Bs, Fs);
+
             // Запись в файл
             writeVectorToFile(fpoints, t_i, state_i);
         }
         fpoints.close();
         return true;
-    }
-    else {
+
+    } else {
         std::cout << "log[ERROR]: Couldn't open or create a file" << std::endl;
         return false;
     }
@@ -226,8 +232,7 @@ vector<double> TripleBigRelaxSolve(const vector<double>& a, const vector<double>
     vector<double> x_now(x_0);
     vector<double> x_prev;
 
-    do
-    {
+    do {
         x_prev = x_now;
         x_now[0] = (d[0] - c[0] * x_prev[1]);
         x_now[0] *= w;
@@ -267,6 +272,7 @@ vector<double> TripleBigRelaxSolve(const vector<double>& a, const vector<double>
 
 // Случай 2 (квазилинейное уравнение)
 bool IterationScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ImpScheme"){
+
     // Физические параметры
     double c = test.c;
     double rho = test.rho;
@@ -292,8 +298,8 @@ bool IterationScheme(double tau, double h, double sigma, PDE_data test, std::str
     std::ofstream fpoints(path);
     std::cout << "log[INFO]: Starting ExplicitScheme" << std::endl;
     std::cout << "log[INFO]: Opening a file \"" << filename << "\" to write..." << std::endl;
-    if (fpoints.is_open())
-    {
+    if (fpoints.is_open()) {
+
         double t_i = t_0;
         std::vector<double> state_i = state_0;
         writeVectorToFile(fpoints, t_i, state_i);
@@ -324,6 +330,7 @@ bool IterationScheme(double tau, double h, double sigma, PDE_data test, std::str
                     As[0] = 0;
                     Fs[0] = -mu;
                 }
+
                 // Граничные условия справа
                 // 1-го рода
                 if (!test.G_right_type) {
@@ -364,12 +371,12 @@ bool IterationScheme(double tau, double h, double sigma, PDE_data test, std::str
                 state_i = TridiagonalMatrixAlgorithm(As, Cs, Bs, Fs);
                 // Запись в файл
             }
+
             writeVectorToFile(fpoints, t_i, state_i);
         }
         fpoints.close();
         return true;
-    }
-    else {
+    } else {
         std::cout << "log[ERROR]: Couldn't open or create a file" << std::endl;
         return false;
     }
@@ -378,6 +385,7 @@ bool IterationScheme(double tau, double h, double sigma, PDE_data test, std::str
 
 //Для определения числа итераций "до сходимости"
 bool infoIterationScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ImpScheme", double EPS=1e-12){
+
     // Физические параметры
     double c = test.c;
     double rho = test.rho;
@@ -403,8 +411,8 @@ bool infoIterationScheme(double tau, double h, double sigma, PDE_data test, std:
     std::ofstream fpoints(path);
     std::cout << "log[INFO]: Starting ExplicitScheme" << std::endl;
     std::cout << "log[INFO]: Opening a file \"" << filename << "\" to write..." << std::endl;
-    if (fpoints.is_open())
-    {
+    if (fpoints.is_open()) {
+
         double t_i = t_0;
         std::vector<double> state_i = state_0;
         std::vector<double> state_ipp = state_i;

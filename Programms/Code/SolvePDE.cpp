@@ -156,10 +156,10 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
 
             // 2-го рода
             else {
-                double a0 = a(test.K_ptr, x_0+h, x_0);
-                double w0 = w(a0, state_i[1], state_i[0], h);
-                double kappa = sigma*a0/h / (c*rho*h/(2*tau)+sigma*a0/h);
-                double mu = (c*rho*state_i[0]*h/(2*tau)+sigma*test.G_left(t_i)+(1-sigma)*(test.G_left(t_i-tau)+w0))/(c*rho*h/(2*tau)+sigma*a0/h);
+                double a1 = a(test.K_ptr, x_0+h, x_0);
+                double w1 = w(a1, state_i[1], state_i[0], h);
+                double kappa = sigma*a1/h / (c*rho*h/(2*tau)+sigma*a1/h);
+                double mu = (c*rho*state_i[0]*h/(2*tau)+sigma*test.G_left(t_i)+(1-sigma)*(test.G_left(t_i-tau)+w1))/(c*rho*h/(2*tau)+sigma*a1/h);
                 Cs[0] = -1.;
                 Bs[0] = -kappa;
                 As[0] = 0;

@@ -369,6 +369,98 @@ u(x, 0) = u_0-500-x(L-x), \phantom{xxx} x\in(0, L),
 	\clearpage % для удобства редактирования <-> потом убрать
 	\quastion{Какие ограничения на $h$, $\tau$ и $\sigma$ накладывают условия устойчивости прогонки?}
 	
+		Рассмотрим схему с весами:
+	\[
+	c \rho \frac{y^{j+1}_i - y^{j}_i}{\tau} = \frac{1}{h} (\sigma(a_{i+1} y^{j+1}_{x,i} - a_{i} y^{j+1}_{\bar{x},i}) + (1-\sigma)(a_{i+1} y^{j}_{x,i} - a_{i} y^{j}_{\bar{x},i}).
+	\]
+	
+	Из полученного ранее:
+	\begin{multline*}
+		(\dfrac{\sigma(a_{i+1}+a_i)}{h^2}+\frac{c \rho}{\tau})y_i^{j+1} = \dfrac{\sigma a_{i+1}}{h^2}y_{i+1}^{j+1} + \dfrac{\sigma a_{i}}{h^2}y_{i-1}^{j+1} + \frac{(1-\sigma)a_{i+1}}{h^2}y_{i+1}^j + \frac{(1-\sigma)a_{i}}{h^2}y_{i-1}^j +\\ 
+		+(\frac{c \rho}{\tau} - \frac{(1-\sigma)(a_{i+1}+a_i)}{h^2})y_i^j.
+	\end{multline*}
+	
+	Домножим обе части равенства на $h^2$ и соберём неизвестные слагаемые слева.
+	
+	\begin{multline*}
+	\dfrac{\sigma a_i}{h} y_{i-1}^{j+1} - (\dfrac{\sigma a_i}{h} + \dfrac{\sigma a_{i+1}}{h}+\dfrac{c \rho h}{\tau})y_i^{j+1} + \dfrac{\sigma a_{i+1}}{h} y_{i+1}^{j+1} = \\
+	= - \frac{(1-\sigma)a_{i+1}}{h}y_{i+1}^j - \frac{(1-\sigma)a_{i}}{h}y_{i-1}^j -
+	(\frac{c \rho h}{\tau} - \frac{(1-\sigma)(a_{i+1}+a_i)}{h})y_i^j.
+\end{multline*}
+	
+	С помощью аппроксимации граничных условий получаем явное выражение для $y_0^{j+1}$ и $y_N^{j+1}$ (при условии $N$ шагов по пространству). Таким образом, перед нами --- система линейный алгебраических уравнений с трёхдиагональной матрицей.
+	\[
+	a_i  y_{i-1}^{j+1} - b_i y_i^{j+1} + c_i y_{i+1}^{j+1} = - d_i, \phantom{xxx} 0\le i\le N; \phantom{xxx} a_0=c_N = 0.
+	\]
+	 Хотелось бы применить для её разрешения метод прогонки, например, правой.
+	
+	\textbf{Теорема.} Если в трёхдиагональной матрице выполнено условие диагонального преобладания: $|b_i| \ge |a_i| + |c_i|$, где хотя бы для одного $i$ выполнено строгое неравенство, то исходная система уравнений имеет решение, которое может быть получено с помощью метода прогонки. Алгоритм прогонки в указанных условиях является корректным и устойчивым (все знаменатели прогоночных коэффициентов не обращаются в нуль, и все $|a_i| \le1$).
+	
+	В таком случае, для устойчивости прогонки необходимы следующие условия на параметры схемы.
+	
+	Для $i=1, \ldots, N-1$:
+	\[
+	|\dfrac{\sigma a_i}{h} + \dfrac{\sigma a_{i+1}}{h}+\dfrac{c \rho h}{\tau}| \ge |\dfrac{\sigma a_i}{h}| + |\dfrac{\sigma a_{i+1}}{h}|
+	\]
+	Из положительности коэффициентов $c$, $\rho$, $\tau$, $h$ и $\sigma$ следует, что условие диагонального преобладания выполнены, причём мы можем заявить о строгом неравенстве.
+	
+	Для $i=\alpha$, где $\alpha \in \{0, N\}$:
+	\begin{enumerate}
+		\item Случай граничного условия первого рода (постоянная температура на границе):
+		\[
+		y_\alpha^{j+1} = u_0 \Rightarrow 
+		a_\alpha = 0, b_\alpha = 1, c_\alpha = 0, d_\alpha = u_0 \Rightarrow \text{У.Д.П. выполнено.}
+		\]
+		
+		\item Случай граничного условия второго рода (заданный поток на границе):
+		\[
+		y_\alpha^{j+1} = \varkappa^{(\alpha)} y_{\alpha - \text{sign}(\alpha-1)}^{j+1} + \mu^{(\alpha)} ,
+		\]
+		где $\varkappa^{(\alpha)} = 
+		\begin{cases}
+			 \frac{\sigma a_1 /h}{c\rho h/(2\tau) + \sigma a_1/h}, \phantom{xxx} \alpha = 0\\
+			 \frac{\sigma a_N /h}{c\rho h/(2\tau) + \sigma a_N/h}, \phantom{xxx} \alpha = N
+		\end{cases}$;
+	
+	\[
+	\mu^{(\alpha)} = \begin{cases}
+		\dfrac{\sigma P(t_{j+1})+(1-\sigma)(w_{\frac12}^j + P(t_j)) + \frac{c \rho h}{2\tau}y_0^j}{c\rho h / (2\tau) + \sigma a_1/h}, \phantom{xxx} \alpha = 0\\
+		\dfrac{\sigma P(t_{j+1})+(1-\sigma)(P(t_j)-w_{N-\frac12}^j) + \frac{c \rho h}{2\tau}y_N^j}{c\rho h / (2\tau) + \sigma a_N/h}, \phantom{xxx} \alpha = N
+	\end{cases}.
+	\]
+	
+	Тогда $a_{\alpha}= \begin{cases}
+		0,& \phantom{xx} \alpha = 0,\\
+		\varkappa^{(N)},& \phantom{xx} \alpha = N
+	\end{cases}$;
+	$b_{\alpha}= 1$; 
+	$c_{\alpha}= \begin{cases}
+		\varkappa^{(0)},& \phantom{xx} \alpha = 0,\\
+		 0,& \phantom{xx} \alpha = N
+	\end{cases}$; 
+	$d_{\alpha}= \mu^{(\alpha)}$. 
+	
+	Для выполнения У.Д.П. необходимо:
+	\[
+	1 \ge |a_{\alpha} + c_{\alpha}|; 
+	\]
+	\[
+	\begin{cases}
+		1 \ge \left|\varkappa^{(0)}\right|,& \phantom{xx} \alpha = 0,\\
+		1 \ge \left|\varkappa^{(N)}\right|,& \phantom{xx} \alpha = N.\\
+	\end{cases};
+	\]
+	\[
+	\begin{cases}
+		1 \ge \left| \frac{\sigma a_1 /h}{c\rho h/(2\tau) + \sigma a_1/h}\right|,& \phantom{xx} \alpha = 0,\\
+		1 \ge \left| \frac{\sigma a_N /h}{c\rho h/(2\tau) + \sigma a_N/h}\right|,& \phantom{xx} \alpha = N.\\
+	\end{cases};
+	\]
+	
+	Таким образом, получили необходимые соотношения.
+	\end{enumerate}
+	
+	
 	\clearpage % для удобства редактирования <-> потом убрать
 	\quastion{В случае $K = K(u)$ чему равно количество внутренних итераций, если итерационный процесс вести до сходимости, а не обрывать после нескольких первых итераций?}
 	
@@ -381,8 +473,13 @@ u(x, 0) = u_0-500-x(L-x), \phantom{xxx} x\in(0, L),
 	
 	\clearpage
 	\begin{thebibliography}{1}
-		\bibitem{1} Галанин М.П., Савенков Е.Б. Методы численного анализа математических моделей. М.: Изд-во МГТУ им. Н.Э. Баумана. 2018. 592 с.
-		
+		\bibitem{1} Галанин М.\,П., Савенков Е.\,Б. Методы численного анализа математических моделей. М.: Изд-во МГТУ им. Н.\,Э. Баумана, 2018. 592 с.
+		\bibitem{2} Марчевский И.\,К., Щерица О.\,В. Численные методы решения задач математической физики: методические указания к выполнению лабораторных работ по курсу <<Методы вычислений>>. М.: Изд-во МГТУ им. Н.\,Э. Баумана, 2016. 63 с.
+		\bibitem{3} Калиткин Н.\,Н.
+		Численные методы: учеб. пособие. —
+		2-е изд., исправленное. СПб.: БХВ-Петербург, 2011. 
+		592 с. 
+		\bibitem{4}  Y.-T. Zhang, C.-W. Shu ENO and WENO schemes, Handbook of Numerical Analysis, Volume 17, Handbook of Numerical Methods for Hyperbolic Problems: Basic and Fundamental Issues. North-Holland, Elsevier, Amsterdam, 2016.
 	\end{thebibliography}
 	
 \end{document}

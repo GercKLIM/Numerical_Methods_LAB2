@@ -19,7 +19,7 @@ int main() {
     PDE_data test1;
     test1.c = ALUMINUM_C;
     test1.rho = ALUMINUM_RHO;
-    test1.h = 0.005;
+    test1.h = 0.05;
     test1.L = 1.;
     test1.tau = 0.009;
     test1.tau = 1.;

@@ -88,15 +88,15 @@ std::vector<double> init_state(int n, double h, PDE_data& test)
 // то u присваивается фиктивное значение 0 (какая разница, чему равно u, если в формуле для K оно не используется в return)(аргумент есть, но он не участвует в вычислении - сделано для универсальности)
 template<typename F>
 double a(F K, double x_i, double x_im, double u_i=0, double u_im=0){
-    //return 0.5 * (K(x_i, u_i)+K(x_im, u_im));
+    return 0.5 * (K(x_i, u_i)+K(x_im, u_im));
     //return K(x_i - 0.5*(x_i-x_im));
     //return sqrt(K(x_i)*K(x_im));
 
     // Предотвращаем деление на ноль
-    if(K(x_i, u_i)+K(x_im, u_im) != 0)
-        return 2*K(x_i, u_i)*K(x_im, u_im) / (K(x_i, u_i)+K(x_im, u_im));
-    else
-        return sqrt(K(x_i, u_i)*K(x_im, u_im));
+   // if(K(x_i, u_i)+K(x_im, u_im) != 0)
+     //   return 2*K(x_i, u_i)*K(x_im, u_im) / (K(x_i, u_i)+K(x_im, u_im));
+    //else
+      //  return sqrt(K(x_i, u_i)*K(x_im, u_im));
 }
 
 double w(double a, double u_i, double u_im, double h) {
@@ -271,7 +271,8 @@ vector<double> TripleBigRelaxSolve(const vector<double>& a, const vector<double>
 }
 
 // Случай 2 (квазилинейное уравнение)
-bool IterationScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ImpScheme"){
+bool
+IterationScheme(double tau, double h, double sigma, PDE_data test, string filename = "ImpScheme", double d = 1e-6) {
 
     // Физические параметры
     double c = test.c;
@@ -302,6 +303,7 @@ bool IterationScheme(double tau, double h, double sigma, PDE_data test, std::str
 
         double t_i = t_0;
         std::vector<double> state_i = state_0;
+        std::vector<double> state_ipp = state_i;
         writeVectorToFile(fpoints, t_i, state_i);
         double x_i = x_0;
 
@@ -312,23 +314,23 @@ bool IterationScheme(double tau, double h, double sigma, PDE_data test, std::str
                 // Граничные условия слева
                 // 1-го рода
                 if (!test.G_left_type) {
-                    Cs[0] = -1.;
+                    Cs[0] = 1.;
                     Bs[0] = 0.;
                     As[0] = 0.;
-                    Fs[0] = -state_0[0];
+                    Fs[0] = test.G_left(t_i);
                 }
                     // 2-го рода
                 else {
-                    double a0 = a(test.K_ptr, x_0 + h, x_0, state_i[1], state_i[0]);
-                    double w0 = w(a0, state_i[1], state_i[0], h);
+                    double a0 = a(test.K_ptr, x_0 + h, x_0, state_ipp[1], state_ipp[0]);
+                    double w0 = w(a0, state_ipp[1], state_ipp[0], h);
                     double kappa = sigma * a0 / h / (c * rho * h / (2 * tau) + sigma * a0 / h);
                     double mu = (c * rho * state_i[0] * h / (2 * tau) + sigma * test.G_left(t_i) +
                                  (1 - sigma) * (test.G_left(t_i - tau) + w0)) /
                                 (c * rho * h / (2 * tau) + sigma * a0 / h);
-                    Cs[0] = -1.;
-                    Bs[0] = -kappa;
+                    Cs[0] = 1.;
+                    Bs[0] = kappa;
                     As[0] = 0;
-                    Fs[0] = -mu;
+                    Fs[0] = mu;
                 }
 
                 // Граничные условия справа
@@ -336,42 +338,42 @@ bool IterationScheme(double tau, double h, double sigma, PDE_data test, std::str
                 if (!test.G_right_type) {
                     Bs[num_space_steps] = 0.;
                     As[num_space_steps] = 0.;
-                    Cs[num_space_steps] = -1.;
-                    Fs[num_space_steps] = -state_0[num_space_steps];
+                    Cs[num_space_steps] = 1.;
+                    Fs[num_space_steps] = test.G_right(t_i);
                 }
                     // 2-го рода
                 else {
-                    double am = a(test.K_ptr, X, X - h, state_i[num_space_steps], state_i[num_space_steps-1]);
-                    double wn = w(am, state_i[num_space_steps], state_i[num_space_steps - 1], h);
+                    double am = a(test.K_ptr, X, X - h, state_ipp[num_space_steps], state_ipp[num_space_steps-1]);
+                    double wn = w(am, state_ipp[num_space_steps], state_ipp[num_space_steps - 1], h);
                     double denom = c * rho * h / (2 * tau) + sigma * am / h;
                     double kappa = sigma * am / h / denom;
                     double mu = (c * rho * state_i[num_space_steps] * h / (2 * tau) + sigma * test.G_right(t_i) +
                                  (1 - sigma) * (test.G_right(t_i - tau) - wn)) / denom;
-                    Cs[num_space_steps] = -1.;
+                    Cs[num_space_steps] = 1.;
                     Bs[num_space_steps] = 0.;
-                    As[num_space_steps] = -kappa;
-                    Fs[num_space_steps] = -mu;
+                    As[num_space_steps] = kappa;
+                    Fs[num_space_steps] = mu;
                 }
 
                 // Обход пространства
                 for (int i = 1; i < num_space_steps; ++i) {
                     x_i += h;
-                    double a_i = a(test.K_ptr, x_i, x_i - h, state_i[i], state_i[i-1]);
-                    double a_ip = a(test.K_ptr, x_i + h, x_i, state_i[i + 1], state_i[i]);
+                    double a_i = a(test.K_ptr, x_i, x_i - h, state_ipp[i], state_ipp[i-1]);
+                    double a_ip = a(test.K_ptr, x_i + h, x_i, state_ipp[i + 1], state_ipp[i]);
                     As[i] = sigma / h * a_i;
                     Bs[i] = sigma / h * a_ip;
                     Cs[i] = (As[i] + Bs[i] + c * rho * h / tau);
                     Fs[i] = (c * rho * h / tau * state_i[i] +
                              (1 - sigma) *
-                             (w(a_ip, state_i[i + 1], state_i[i], h) - w(a_i, state_i[i], state_i[i - 1], h)));
+                             (w(a_ip, state_i[i + 1], state_ipp[i], h) - w(a_i, state_ipp[i], state_ipp[i - 1], h)));
 
                 }
                 // Получение нового состояния системы
                 //state_i = TripleBigRelaxSolve(As, Cs, Bs, Fs, state_i);
-                state_i = TridiagonalMatrixAlgorithm(As, Cs, Bs, Fs);
+                state_ipp = TridiagonalMatrixAlgorithm(As, Cs, Bs, Fs);
                 // Запись в файл
             }
-
+            state_i = state_ipp;
             writeVectorToFile(fpoints, t_i, state_i);
         }
         fpoints.close();
@@ -413,91 +415,109 @@ bool infoIterationScheme(double tau, double h, double sigma, PDE_data test, std:
     std::cout << "log[INFO]: Opening a file \"" << filename << "\" to write..." << std::endl;
     if (fpoints.is_open()) {
 
-        double t_i = t_0;
-        std::vector<double> state_i = state_0;
-        std::vector<double> state_ipp = state_i;
-        writeVectorToFile(fpoints, t_i, state_i);
-        double x_i = x_0;
-        int iter_counter = 0;
-        // Эволюция системы во времени
-        for(int j = 0; j <= num_time_steps; ++j) {
-            t_i += tau;
-            iter_counter = 0;
-            do {
-                state_i = state_ipp;
-                // Граничные условия слева
-                // 1-го рода
-                if (!test.G_left_type) {
-                    Cs[0] = -1.;
-                    Bs[0] = 0.;
-                    As[0] = 0.;
-                    Fs[0] = -state_0[0];
-                }
-                    // 2-го рода
-                else {
-                    double a0 = a(test.K_ptr, x_0 + h, x_0, state_i[1], state_i[0]);
-                    double w0 = w(a0, state_i[1], state_i[0], h);
-                    double kappa = sigma * a0 / h / (c * rho * h / (2 * tau) + sigma * a0 / h);
-                    double mu = (c * rho * state_i[0] * h / (2 * tau) + sigma * test.G_left(t_i) +
-                                 (1 - sigma) * (test.G_left(t_i - tau) + w0)) /
-                                (c * rho * h / (2 * tau) + sigma * a0 / h);
-                    Cs[0] = -1.;
-                    Bs[0] = -kappa;
-                    As[0] = 0;
-                    Fs[0] = -mu;
-                }
-                // Граничные условия справа
-                // 1-го рода
-                if (!test.G_right_type) {
-                    Bs[num_space_steps] = 0.;
-                    As[num_space_steps] = 0.;
-                    Cs[num_space_steps] = -1.;
-                    Fs[num_space_steps] = -state_0[num_space_steps];
-                }
-                    // 2-го рода
-                else {
-                    double am = a(test.K_ptr, X, X - h, state_i[num_space_steps],state_i[num_space_steps-1]);
-                    double wn = w(am, state_i[num_space_steps], state_i[num_space_steps - 1], h);
-                    double denom = c * rho * h / (2 * tau) + sigma * am / h;
-                    double kappa = sigma * am / h / denom;
-                    double mu = (c * rho * state_i[num_space_steps] * h / (2 * tau) + sigma * test.G_right(t_i) +
-                                 (1 - sigma) * (test.G_right(t_i - tau) - wn)) / denom;
-                    Cs[num_space_steps] = -1.;
-                    Bs[num_space_steps] = 0.;
-                    As[num_space_steps] = -kappa;
-                    Fs[num_space_steps] = -mu;
-                }
+        // Открываем файл для записи числа внутренних итераций на каждом шаге
+        std::string infoPath = "./OutputData/iterationsAmount_"+filename;
+        std::ofstream fiterations(infoPath);
+        std::cout << "log[INFO]: Opening a file \"" << infoPath << "\" to write..." << std::endl;
 
-                // Обход пространства
-                for (int i = 1; i < num_space_steps; ++i) {
-                    x_i += h;
-                    double a_i = a(test.K_ptr, x_i, x_i - h, state_i[i], state_i[i-1]);
-                    double a_ip = a(test.K_ptr, x_i + h, x_i, state_i[i + 1],state_i[i]);
-                    As[i] = sigma / h * a_i;
-                    Bs[i] = sigma / h * a_ip;
-                    Cs[i] = (As[i] + Bs[i] + c * rho * h / tau);
-                    Fs[i] = (c * rho * h / tau * state_i[i] +
-                             (1 - sigma) *
-                             (w(a_ip, state_i[i + 1], state_i[i], h) - w(a_i, state_i[i], state_i[i - 1], h)));
+        if (fiterations.is_open()) {
 
-                }
-                // Получение нового состояния системы
-                //state_ipp = TripleBigRelaxSolve(As, (-1.)*Cs, Bs, (-1.)*Fs, state_i);
-                state_ipp = TridiagonalMatrixAlgorithm(As, Cs, Bs, Fs);
-                ++iter_counter;
-            } while(norm(state_ipp + (-1.)*state_i) >= EPS);
-            std::cout << "Iterations on time-step" << t_i << " is " << iter_counter << std::endl;
-            // Запись в файл
+            // Основной алгоритм
+            double t_i = t_0;
+            std::vector<double> state_i = state_0;
+            std::vector<double> state_ipp = state_i;
             writeVectorToFile(fpoints, t_i, state_i);
+            double x_i = x_0;
+            int iter_counter = 0;
+            // Эволюция системы во времени
+            for (int j = 0; j <= num_time_steps; ++j) {
+                t_i += tau;
+                iter_counter = 0;
+                do {
+                    //state_i = state_ipp;
+                    // Граничные условия слева
+                    // 1-го рода
+                    if (!test.G_left_type) {
+                        Cs[0] = 1.;
+                        Bs[0] = 0.;
+                        As[0] = 0.;
+                        Fs[0] = test.G_left(t_i);
+                    }
+                        // 2-го рода
+                    else {
+                        double a0 = a(test.K_ptr, x_0 + h, x_0, state_ipp[1], state_ipp[0]);
+                        double w0 = w(a0, state_ipp[1], state_ipp[0], h);
+                        double kappa = sigma * a0 / h / (c * rho * h / (2 * tau) + sigma * a0 / h);
+                        double mu = (c * rho * state_i[0] * h / (2 * tau) + sigma * test.G_left(t_i) +
+                                     (1 - sigma) * (test.G_left(t_i - tau) + w0)) /
+                                    (c * rho * h / (2 * tau) + sigma * a0 / h);
+                        Cs[0] = 1.;
+                        Bs[0] = kappa;
+                        As[0] = 0;
+                        Fs[0] = mu;
+                    }
+                    // Граничные условия справа
+                    // 1-го рода
+                    if (!test.G_right_type) {
+                        Bs[num_space_steps] = 0.;
+                        As[num_space_steps] = 0.;
+                        Cs[num_space_steps] = 1.;
+                        Fs[num_space_steps] = test.G_right(t_i);
+                    }
+                        // 2-го рода
+                    else {
+                        double am = a(test.K_ptr, X, X - h, state_ipp[num_space_steps], state_ipp[num_space_steps - 1]);
+                        double wn = w(am, state_ipp[num_space_steps], state_ipp[num_space_steps - 1], h);
+                        double denom = c * rho * h / (2 * tau) + sigma * am / h;
+                        double kappa = sigma * am / h / denom;
+                        double mu = (c * rho * state_i[num_space_steps] * h / (2 * tau) + sigma * test.G_right(t_i) +
+                                     (1 - sigma) * (test.G_right(t_i - tau) - wn)) / denom;
+                        Cs[num_space_steps] = 1.;
+                        Bs[num_space_steps] = 0.;
+                        As[num_space_steps] = kappa;
+                        Fs[num_space_steps] = mu;
+                    }
+
+                    // Обход пространства
+                    for (int i = 1; i < num_space_steps; ++i) {
+                        x_i += h;
+                        double a_i = a(test.K_ptr, x_i, x_i - h, state_ipp[i], state_ipp[i - 1]);
+                        double a_ip = a(test.K_ptr, x_i + h, x_i, state_ipp[i + 1], state_ipp[i]);
+                        As[i] = sigma / h * a_i;
+                        Bs[i] = sigma / h * a_ip;
+                        Cs[i] = (As[i] + Bs[i] + c * rho * h / tau);
+                        Fs[i] = (c * rho * h / tau * state_i[i] +
+                                 (1 - sigma) *
+                                 (w(a_ip, state_ipp[i + 1], state_ipp[i], h) - w(a_i, state_ipp[i], state_ipp[i - 1], h)));
+
+                    }
+                    // Получение нового состояния системы
+                    //state_ipp = TripleBigRelaxSolve(As, (-1.)*Cs, Bs, (-1.)*Fs, state_i);
+                    state_ipp = TridiagonalMatrixAlgorithm(As, Cs, Bs, Fs);
+                    ++iter_counter;
+                } while (norm(state_ipp - state_i) >= EPS);
+                //std::cout << "Iterations on time-step" << t_i << " is " << iter_counter << std::endl;
+
+                // Запись в файл итераций
+                fiterations << iter_counter << std::endl;
+                state_i = state_ipp;
+                // Запись в файл состояния
+                writeVectorToFile(fpoints, t_i, state_i);
+            }
+            fiterations.close();
+            fpoints.close();
+            return true;
         }
-        fpoints.close();
-        return true;
+        else{
+            std::cout << "log[ERROR]: Couldn't open or create a file for iterations" << std::endl;
+        }
     }
     else {
         std::cout << "log[ERROR]: Couldn't open or create a file" << std::endl;
         return false;
     }
-};
+    return false;
+}
 
 //*****************************************OLEG's sandbox**********************************//
 // Моя переделка функций Вани:

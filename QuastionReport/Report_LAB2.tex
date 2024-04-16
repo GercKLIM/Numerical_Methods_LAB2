@@ -464,6 +464,57 @@ u(x, 0) = u_0-500-x(L-x), \phantom{xxx} x\in(0, L),
 	\clearpage % для удобства редактирования <-> потом убрать
 	\quastion{В случае $K = K(u)$ чему равно количество внутренних итераций, если итерационный процесс вести до сходимости, а не обрывать после нескольких первых итераций?}
 	
+	Поставим задачу квазилинейного уравнения теплопроводности:
+	\[
+	\begin{cases}
+		c \rho \dfrac{\partial u}{\partial t} = \dfrac{\partial}{\partial x}\left(K(u)\dfrac{\partial u}{\partial x} \right), \phantom{xxx} 0<x<L, \phantom{xxx} 0<t\le T, \\
+		u(x,0) = \text{initState}(x), \phantom{xxx} 0<x<L,\\
+		u(0,t) = u_0, \phantom{xxx} 0 \le t \le T,\\
+		u(L, t) = u_0, \phantom{xxx} 0 \le t \le T,
+	\end{cases}
+	\]
+	где $\rho = 2600\frac{\text{кг}}{\text{м}^3}$, $c = 840 \frac{\text{Дж}}{\text{кг К}}$, $u_0 = 800$К, $\text{initState}(x)=u0-500 - x(L-x)$, $L=1$м, $T=100$с, $K(u)=13.7+0.0017u+0.000003u^2$.
+	
+	Будем оценивать количество внутренних итераций эмпирически. Критерий сходимости $\|y^{s+1}-y^{s}\| < \varepsilon = 10^{-6}$.
+	
+	 \begin{figure}[H]
+		\centering
+		\includegraphics[width=1\textwidth]{iterations1}
+		\caption{Число итераций на каждом временном слое, случай 1}
+	\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{iterations1sol}
+	\caption{Решение при $t=100$, случай 1}
+\end{figure}
+	
+	Изменим граничные условия слева: $-K(u)\dfrac{\partial u}{\partial x}|_{(0,t)}=12t^2$.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\textwidth]{iterations2}
+		\caption{Число итераций на каждом временном слое, случай 2}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\textwidth]{iterations2sol}
+		\caption{Решение при $t=100$, случай 2}
+	\end{figure}
+
+	Рассмотрим также задачу следующего вида:
+		\[
+	\begin{cases}
+		\dfrac{\partial u}{\partial t} = \dfrac{\partial}{\partial x}\left(0.5\cdot u^2\dfrac{\partial u}{\partial x} \right), \phantom{xxx} 0<x<L, \phantom{xxx} 0<t\le T, \\
+		u(x,0) = 0, \phantom{xxx} 0<x<L,\\
+		u(0,t) = \sqrt{\dfrac{2\cdot5^2}{0.5}}t^{\frac12}, \phantom{xxx} 0 \le t \le T,\\
+		K(u)\dfrac{\partial u}{\partial x}|_{(L,t)}=0, \phantom{xxx} 0 \le t \le T,
+	\end{cases}
+	\]
+	
+	Расчёты будем проводить с шагами $h=0.2$, $\tau=2\cdot 10^{-4}$. Выберем $L=10$, $T=1$.
+	
 	\clearpage % для удобства редактирования <-> потом убрать
 	\quastion{Для случая K = K(u) предложите способы организации внутреннего итерационного процесса или алгоритмы, заменяющие его.}
 	

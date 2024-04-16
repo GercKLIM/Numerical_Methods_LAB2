@@ -27,22 +27,25 @@ int main() {
     test1.u0 = 800.;
     test1.set_G_left([&](double x) { return test1.u0; });
     test1.G_left_type = false;
+    //test1.set_G_left([&](double t) {return t*t*12;});
+    //test1.G_left_type = true;
     test1.set_G_right([&](double x) { return test1.u0; });
     test1.G_right_type = false;
     test1.set_init_func([&](double x){ return test1.u0-500 - x*(test1.L-x); });
     test1.set_K([&](double x, double u){return 237*(1+0.0034*(u-293));});
+    //test1.set_K([&](double x, double u){return 13.7+0.0017*u+0.000003*u*u;});
     test1.K_type = true; //Решаем итерационным методом
     if(!test1.K_type) {
         FiniteScheme(test1.tau, test1.h,1.,test1,"test1");
     } else {
-        IterationScheme(test1.tau, test1.h, 0., test1, "test1_iterational");
+        IterationScheme(test1.tau, test1.h, 1., test1, "test1_iterational", 1e-3);
     }
     test1.set_K([&](double x, double u) { return ALUMINUM_K; });
     test1.K_type = false;
     if(!test1.K_type) {
         FiniteScheme(test1.tau, test1.h,1.,test1,"test1");
     } else {
-        IterationScheme(test1.tau, test1.h, 0., test1, "test1_iterational");
+        IterationScheme(test1.tau, test1.h, 1., test1, "test1_iterational");
     }
     test1.show(); // Вывод информации о тесте
 
@@ -67,10 +70,30 @@ int main() {
     if(!test2.K_type) {
         FiniteScheme(test2.tau, test2.h,1.,test2,"test2");
     } else {
-        IterationScheme(test2.tau, test2.h, 0., test2, "test2_iterational");
+        IterationScheme(test2.tau, test2.h, 1., test2, "test2_iterational");
     }
 
-
+    /* Тест квазилинейного уравнения (методичка, п.3)*/
+    PDE_data test3;
+    test3.c = 1.;
+    test3.rho = 1.;
+    test3.L = 10.;
+    test3.T = 1.;
+    test3.h = 0.2;
+    test3.tau = 0.0002;
+    test3.u0 = sqrt(2*5*5/0.5);
+    test3.set_G_left([&](double t) { return test3.u0*sqrt(t); });
+    test3.G_left_type = false;
+    test3.set_G_right([&](double x) { return 0; });
+    test3.G_right_type = true;
+    test3.set_init_func([&](double x){ return 0.; });
+    test3.set_K([&](double x, double u) { return 0.5*u*u; });
+    test3.K_type = true;
+    if(!test3.K_type) {
+        FiniteScheme(test3.tau, test3.h,1.,test3,"test3");
+    } else {
+        infoIterationScheme(test3.tau, test3.h, 1., test3, "test3_iterational", 1e-10);
+    }
 
     /* Тест: Вариант 5 */
     PDE_data test5;

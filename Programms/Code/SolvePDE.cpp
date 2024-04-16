@@ -148,10 +148,10 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
 
             // 1-го рода
             if(!test.G_left_type){
-                Cs[0] = -1.;
+                Cs[0] = 1.;
                 Bs[0] = 0.;
                 As[0] = 0.;
-                Fs[0] = -state_0[0];
+                Fs[0] = test.G_left(t_i);
             }
 
             // 2-го рода
@@ -160,10 +160,10 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
                 double w1 = w(a1, state_i[1], state_i[0], h);
                 double kappa = sigma*a1/h / (c*rho*h/(2*tau)+sigma*a1/h);
                 double mu = (c*rho*state_i[0]*h/(2*tau)+sigma*test.G_left(t_i)+(1-sigma)*(test.G_left(t_i-tau)+w1))/(c*rho*h/(2*tau)+sigma*a1/h);
-                Cs[0] = -1.;
-                Bs[0] = -kappa;
+                Cs[0] = 1.;
+                Bs[0] = kappa;
                 As[0] = 0;
-                Fs[0] = -mu;
+                Fs[0] = mu;
             }
 
             // Граничные условия справа
@@ -171,8 +171,8 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
             if(!test.G_right_type){
                 Bs[num_space_steps] = 0.;
                 As[num_space_steps] = 0.;
-                Cs[num_space_steps] = -1.;
-                Fs[num_space_steps] = -state_0[num_space_steps];
+                Cs[num_space_steps] = 1.;
+                Fs[num_space_steps] = test.G_right(t_i);
             }
 
             // 2-го рода
@@ -182,10 +182,10 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
                 double denom = c * rho * h / (2 * tau) + sigma * am / h;
                 double kappa = sigma * am /h / denom;
                 double mu = (c * rho * state_i[num_space_steps] * h / (2 * tau) + sigma * test.G_right(t_i) + (1 - sigma) * (test.G_right(t_i-tau) - wn)) / denom;
-                Cs[num_space_steps] = -1.;
+                Cs[num_space_steps] = 1.;
                 Bs[num_space_steps] = 0.;
-                As[num_space_steps] = -kappa;
-                Fs[num_space_steps] = -mu;
+                As[num_space_steps] = kappa;
+                Fs[num_space_steps] = mu;
             }
 
             // Обход пространства

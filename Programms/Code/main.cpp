@@ -288,8 +288,8 @@ void make_data_for_tables() {
     PDE_data test0;
     test0.c = 1;
     test0.rho = 1;
-    test0.L = 0.8;
-    test0.T = 0.8;
+    test0.L = 1;
+    test0.T = 1;
 
     // Граничные условия
     test0.set_G_left([&](double x) { return 0; });
@@ -312,9 +312,9 @@ void make_data_for_tables() {
 
 
 
-    for (int n = 0; n < sigmas.size(); n++) {
+    for (int n = 1; n < sigmas.size(); n++) {
 
-        double tau = 0.02;
+        double tau = 0.2;
         double h = 0.2;
 
         for (int i = 0; i < 6; i++) {
@@ -349,8 +349,8 @@ void make_data_for_tables() {
 
 
 int main(){
-    programm();
-    //make_data_for_tables();
+    //programm();
+    make_data_for_tables();
 
     return 0;
 }

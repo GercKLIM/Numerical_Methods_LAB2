@@ -137,6 +137,14 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string
     {
         double t_i = t_0;
         std::vector<double> state_i = state_0;
+
+        // Запишем шаг по сетке в файл
+        std::vector<double> setka(num_space_steps+1);
+        for (int i = 0; i < num_space_steps+1; i++) {
+            setka[i] = h * i;
+        }
+        writeVectorToFile(fpoints, 0., setka);
+
         writeVectorToFile(fpoints, t_i, state_i);
         double x_i = x_0;
 

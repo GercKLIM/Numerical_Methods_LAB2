@@ -9,7 +9,29 @@
 
 /* *** Начальные функции для испорта/экспорта данных *** */
 
+/* Функция импорта чисел из файла */
+std::vector<double> ImportData(const std::string& filename) {
+    std::vector<double> numbers;
 
+    // Открытие файла для чтения
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return numbers;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        // Преобразование строки в число типа double и добавление его в вектор
+        double num = std::atof(line.c_str());
+        numbers.push_back(num);
+    }
+
+    // Закрытие файла
+    file.close();
+
+    return numbers;
+}
 
 /* Функция импорта матрицы из текстового файла*/
 template <typename T>

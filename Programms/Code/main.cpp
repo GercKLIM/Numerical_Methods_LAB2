@@ -7,7 +7,6 @@
 
 #include <iostream>
 #include "algebra.h"    // Алгебра векторов и матриц
-#include "TESTS.cpp"    // Класс условий тестов
 #include "SolvePDE.cpp" // Методы решения PDE
 #include "Config.h"     // Константы для тестов
 
@@ -22,7 +21,7 @@ int main() {
     test1.h = 0.05;
     test1.L = 1.;
     test1.tau = 0.009;
-    test1.tau = 1.;
+    //test1.tau = 14;
     test1.T = 100.;
     test1.u0 = 800.;
     test1.set_G_left([&](double x) { return test1.u0; });
@@ -38,12 +37,12 @@ int main() {
     if(!test1.K_type) {
         FiniteScheme(test1.tau, test1.h,1.,test1,"test1");
     } else {
-        IterationScheme(test1.tau, test1.h, 1., test1, "test1_iterational", 1e-3);
+        infoIterationScheme(test1.tau, test1.h, 1., test1, "test1_iterational",1e-4);
     }
     test1.set_K([&](double x, double u) { return ALUMINUM_K; });
     test1.K_type = false;
     if(!test1.K_type) {
-        FiniteScheme(test1.tau, test1.h,1.,test1,"test1");
+        FiniteScheme(test1.tau, test1.h,0.,test1,"test1");
     } else {
         IterationScheme(test1.tau, test1.h, 1., test1, "test1_iterational");
     }
@@ -97,12 +96,13 @@ int main() {
 
     /* Тест: Вариант 5 */
     PDE_data test5;
-    test5.c = 2;
-    test5.rho = 0.25;
-    test5.L = 1;
+    test5.c = 2.;
     test5.t0 = 0.5;
-    test5.T = 10;
-    test5.u0 = 0.2;
+    test5.rho = 0.25;
+    test5.L = 1.;
+    test5.T = 10.;
+    test3.h = 0.2;
+    test3.tau = 0.002;
     test5.set_K([](double x, double u) {
         double x1 = 0.5, x2 = 2./3.;
         double k1 = 2. , k2 = 0.5;
@@ -118,12 +118,13 @@ int main() {
             return 0.;
         }
     });
+    test5.K_type = false;
     test5.set_G_left([](double x) { return 0.2; });
     test5.G_left_type = false;
     test5.set_G_right([](double x) { return 10.; });
     test5.G_right_type = false;
     test5.set_init_func([](double x){ return 20.; });  // Начальная температура по всему стержню
-
+    //FiniteScheme(test5.tau, test5.h, 1., test5, "test5iters");
     /* Случай test 5. */
     //ExplicitScheme(0.01, 0.1, 1., test5);
     //SolvePDE_1(test5, 0.01, 0.1, 0.5, "ExpScheme_test5");

@@ -358,10 +358,12 @@ u(x, 0) = u_0-500-x(L-x), \phantom{xxx} x\in(0, L),
 	\caption{Распределение температуры в стержне при \mbox{$t=100$с} (монотонная схема)}
 \end{figure}
 
-Нарушим монотонность схемы, выбрав значения $h=0.005$, $\tau = 1$, $\sigma = 0$.
+\pagebreak
+
+Нарушим монотонность схемы, выбрав значения $h=0.05$, $\tau = 14$, $\sigma = 0$.
 
  \begin{figure}[H]
-	\centering
+	\centering	
 	\includegraphics[width=1\textwidth]{nomonotExample}
 	\caption{Распределение температуры в стержне при \mbox{$t=100$с} (немонотонная схема)}
 \end{figure}
@@ -464,7 +466,7 @@ u(x, 0) = u_0-500-x(L-x), \phantom{xxx} x\in(0, L),
 	\clearpage % для удобства редактирования <-> потом убрать
 	\quastion{В случае $K = K(u)$ чему равно количество внутренних итераций, если итерационный процесс вести до сходимости, а не обрывать после нескольких первых итераций?}
 	
-	Поставим задачу квазилинейного уравнения теплопроводности:
+	\textbf{Тест 1}. Поставим задачу квазилинейного уравнения теплопроводности:
 	\[
 	\begin{cases}
 		c \rho \dfrac{\partial u}{\partial t} = \dfrac{\partial}{\partial x}\left(K(u)\dfrac{\partial u}{\partial x} \right), \phantom{xxx} 0<x<L, \phantom{xxx} 0<t\le T, \\
@@ -475,35 +477,29 @@ u(x, 0) = u_0-500-x(L-x), \phantom{xxx} x\in(0, L),
 	\]
 	где $\rho = 2600\frac{\text{кг}}{\text{м}^3}$, $c = 840 \frac{\text{Дж}}{\text{кг К}}$, $u_0 = 800$К, $\text{initState}(x)=u0-500 - x(L-x)$, $L=1$м, $T=100$с, $K(u)=13.7+0.0017u+0.000003u^2$.
 	
-	Будем оценивать количество внутренних итераций эмпирически. Критерий сходимости $\|y^{s+1}-y^{s}\| < \varepsilon = 10^{-6}$.
+	Будем оценивать количество внутренних итераций эмпирически. Критерий сходимости $\|y^{s+1}-y^{s}\| < \varepsilon_i$, где $\varepsilon_i \in \{10^{-4},10^{-7},10^{-10}\}$. Число итераций на каждом временном слое для различных $\varepsilon_i$ представлены на рисунках ниже.
 	
 	 \begin{figure}[H]
 		\centering
-		\includegraphics[width=1\textwidth]{iterations1}
-		\caption{Число итераций на каждом временном слое, случай 1}
+		\includegraphics[width=1\textwidth]{test1-1e-4}
+		\caption{Тест 1, $\varepsilon_i=10^{-4}$}
 	\end{figure}
 
-\begin{figure}[H]
+ \begin{figure}[H]
 	\centering
-	\includegraphics[width=1\textwidth]{iterations1sol}
-	\caption{Решение при $t=100$, случай 1}
+	\includegraphics[width=1\textwidth]{test1-1e-7}
+	\caption{Тест 1, $\varepsilon_i=10^{-7}$}
 \end{figure}
 	
-	Изменим граничные условия слева: $-K(u)\dfrac{\partial u}{\partial x}|_{(0,t)}=12t^2$.
-	
-	\begin{figure}[H]
+	 \begin{figure}[H]
 		\centering
-		\includegraphics[width=1\textwidth]{iterations2}
-		\caption{Число итераций на каждом временном слое, случай 2}
+		\includegraphics[width=1\textwidth]{test1-1e-10}
+		\caption{Тест 1, $\varepsilon_i=10^{-10}$}
 	\end{figure}
 	
-	\begin{figure}[H]
-		\centering
-		\includegraphics[width=1\textwidth]{iterations2sol}
-		\caption{Решение при $t=100$, случай 2}
-	\end{figure}
+	
 
-	Рассмотрим также задачу следующего вида:
+	\textbf{Тест 2}. Рассмотрим также задачу следующего вида:
 		\[
 	\begin{cases}
 		\dfrac{\partial u}{\partial t} = \dfrac{\partial}{\partial x}\left(0.5\cdot u^2\dfrac{\partial u}{\partial x} \right), \phantom{xxx} 0<x<L, \phantom{xxx} 0<t\le T, \\
@@ -513,17 +509,80 @@ u(x, 0) = u_0-500-x(L-x), \phantom{xxx} x\in(0, L),
 	\end{cases}
 	\]
 	
-	Расчёты будем проводить с шагами $h=0.2$, $\tau=2\cdot 10^{-4}$. Выберем $L=10$, $T=1$.
+	Расчёты будем проводить с шагами $h=0.2$, $\tau=2\cdot 10^{-4}$. Выберем $L=10$, $T=1$.  Критерий сходимости $\|y^{s+1}-y^{s}\| < \varepsilon_i$, где $\varepsilon_i \in \{10^{-4},10^{-7},10^{-10}\}$. Число итераций на каждом временном слое для различных $\varepsilon_i$ представлены на рисунках ниже.
+	
+	 \begin{figure}[H]
+		\centering
+		\includegraphics[width=1\textwidth]{test3-1e-4}
+		\caption{Тест 2, $\varepsilon_i=10^{-4}$}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\textwidth]{test3-1e-7}
+		\caption{Тест 2, $\varepsilon_i=10^{-7}$}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\textwidth]{test3-1-e-10}
+		\caption{Тест 2, $\varepsilon_i=10^{-10}$}
+	\end{figure}
+	
 	
 	\clearpage % для удобства редактирования <-> потом убрать
 	\quastion{Для случая K = K(u) предложите способы организации внутреннего итерационного процесса или алгоритмы, заменяющие его.}
 	
+	В статье \cite{5} предлагается алгоритм решения квазилинейного уравнения теплопроводности, основанный на использовании явной разностной схемы. Зависимость коэффициентов уравнения от температуры преодолевается введение новой искомой функции --- первообразной теплопроводности.
 	
+	Авторы предлагают уравнение
+	\[
+		с \rho\dfrac{\partial u}{\partial t} = \dfrac{\partial}{\partial x}\left(K(u)\dfrac{\partial u}{\partial x} \right)
+	\]
+	заменой 
+	\[
+	G(u) = \int_{0}^{u} K(\xi)d\xi
+	\]
+	получить уравнение
+	\[
+	\dfrac{\partial G}{\partial t} = a^2(u)\dfrac{\partial^2G}{\partial x^2},
+	\]
+	где $a(u) = \sqrt{K(u)/(c\rho)}$ --- коэффициент температуропроводности. Функция $G(u)$ является строго монотонной функцией температуры.
 	
+	Шаблон разностной схемы предлагается выбрать следующим:
+	\[
+	\dfrac{dG_i(t)}{dt} = a^2(u_i) \dfrac{G_{i-1}(t)-2G_i(t)+G_{i+1}(t)}{h^2}, \phantom{xxx} t\in[0, \tau], \phantom{x} i=2,\ldots,N-1.
+	\]
 	
+	Аппроксимация значений $G_{i-1}(t)$ и $G_{i+1}(t)$ с точностью до членов первого порядка малости даёт следующую схему
+	\[
+	\dfrac{dG_i(t)}{dt} + \dfrac{2a^2(u_i)}{h^2}G_i(t) = \dfrac{a^2(u_i)}{h^2}\left( G_{i-1}(0) + G_{i+1}(0) + \big(\dfrac{dG_{i-1}(t)}{dt}(0)+\dfrac{dG_{i+1}(t)}{dt}(0)\big)t\right).
+	\]
 	
+	Решением полученного уравнения является функция
+	\[
+		G_i(t) = (G_i(0)-B) \exp\{-\frac{2a^2(u_i)}{h^2}t\} + At + B, \phantom{xxx} t\in [0, \tau],
+	\]
+	где $A=\frac12 \big(\dfrac{dG_{i-1}(t)}{dt}(0)+\dfrac{dG_{i+1}(t)}{dt}(0)\big)$,
+	\mbox{$B = \dfrac{G_{i-1}(0)+G_{i+1}(0)}{2}-A\cdot \dfrac{h^2}{2a^2(u_i)}$}.
+	
+	Записав разностные аппроксимации для производных по времени, 
+	\[
+	\dfrac{G_{i-1}}{dt}(0) = \frac{G_{i-1}^{(+\frac{1}{2})}-G_{i-1}^{(-\frac{1}{2})}}{\tau},
+	\]
+	\[
+	\dfrac{G_{i+1}}{dt}(0) = \frac{G_{i+1}^{(+\frac{1}{2})}-G_{i+1}^{(-\frac{1}{2})}}{\tau},
+	\]
+	получим:
+	\[
+	G_i^{(+1)} = (G_i - B)\exp\{-\frac{2a^2(u_i)}{h^2}t\} + A\tau +B,
+	\]
+	где $A = \frac{1}{2\tau}(G_{i-1}^{(+\frac12)}  - G_{i-1}^{(-\frac12)} + G_{i+1}^{(+\frac12)} - G_{i+1}^{(-\frac12)})$, 
+	\mbox{$B=\frac{G_{i-1}+G_{i+1}}{2} - A\cdot \frac{h^2}{2a^2(u_i)}$}.
+	
+	Для применения схемы необходимо по заданному значению $G_i$ найти температуру $u_i$ такую, что $G_i = \int_{0}^{u_i}q(\xi)d\xi$. В силу монотонности функции $G(u)$ эту задачу можно решить, например, методом дихотомии (деления отрезка пополам) или методом Ньютона.
 	\clearpage
-	\begin{thebibliography}{1}
+	\begin{thebibliography}{9}
 		\bibitem{1} Галанин М.\,П., Савенков Е.\,Б. Методы численного анализа математических моделей. М.: Изд-во МГТУ им. Н.\,Э. Баумана, 2018. 592 с.
 		\bibitem{2} Марчевский И.\,К., Щерица О.\,В. Численные методы решения задач математической физики: методические указания к выполнению лабораторных работ по курсу <<Методы вычислений>>. М.: Изд-во МГТУ им. Н.\,Э. Баумана, 2016. 63 с.
 		\bibitem{3} Калиткин Н.\,Н.
@@ -531,6 +590,7 @@ u(x, 0) = u_0-500-x(L-x), \phantom{xxx} x\in(0, L),
 		2-е изд., исправленное. СПб.: БХВ-Петербург, 2011. 
 		592 с. 
 		\bibitem{4}  Y.-T. Zhang, C.-W. Shu ENO and WENO schemes, Handbook of Numerical Analysis, Volume 17, Handbook of Numerical Methods for Hyperbolic Problems: Basic and Fundamental Issues. North-Holland, Elsevier, Amsterdam, 2016.
+		\bibitem{5} А.\,В. Геренштейн, М.\,З. Хайрисламов Явная разностная схема решения одномерного квазилинейного уравнения теплопроводности. Вестник ЮУрГУ. Серия: Математика. Механика. Физика. 2013. №1.
 	\end{thebibliography}
 	
 \end{document}

@@ -263,7 +263,6 @@ T norm(const std::vector<T>& vec, const int& p){
 
         result = pow(result, 1.0 / p);
     }
-
     return result;
 }
 

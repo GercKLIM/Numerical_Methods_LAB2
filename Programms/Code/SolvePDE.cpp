@@ -6,9 +6,31 @@
 #include "SolvePDE.h"
 #include "algebra.cpp"
 #include "FileIO.h"
-
+#include "TESTS.cpp"
 
 //
+//скалярное произведение
+template <typename LT>
+LT scmult(std::vector<LT> v1, std::vector<LT> v2)
+{
+    LT result = 0;
+    for (auto v = v1.begin(), p = v2.begin(); v != v1.end() && p != v2.end(); v++, p++)
+    {
+        result += *v * *p;
+    }
+    return result;
+}
+template<typename LT>
+LT operator * (const std::vector<LT>& v1, const std::vector<LT>& v2)
+{
+    return scmult(v1, v2);
+}
+//норма
+template <typename LT>
+LT vec_norm(std::vector<LT> v1)
+{
+    return std::sqrt(scmult<LT>(v1, v1));
+}
 //печать вектора
 template<typename LT>
 void out(vector<LT> vec)
@@ -27,24 +49,23 @@ void out(vector<LT> vec)
 // Если векторы диагоналей исходной системы заданы как A,B,C,D (A - диагональ опд главной, B - главная диагональ, C - диагональ над главной, D- правая часть)
 // То для правильного расчёта необходимо передавать A, (-1.)*B, C, (-1.)*D
 // Так как прогонка актуальная для системы (***)
-template<typename DT>
-std::vector<DT> TridiagonalMatrixAlgorithm(
-        std::vector<DT> a,
-        std::vector<DT> b,
-        std::vector<DT> c,
-        std::vector<DT> d
+std::vector<double> TridiagonalMatrixAlgorithm(
+        std::vector<double> a,
+        std::vector<double> b,
+        std::vector<double> c,
+        std::vector<double> d
         ){
     int n = b.size();
-    std::vector<DT> alphas({ c[0] / b[0] });
-    std::vector<DT> betas({d[0] / b[0]});
+    std::vector<double> alphas({ c[0] / b[0] });
+    std::vector<double> betas({d[0] / b[0]});
     for (int i = 1; i < n-1; ++i)
     {
-        DT denom = b[i] - a[i] * alphas[i - 1];
+        double denom = b[i] - a[i] * alphas[i - 1];
         alphas.push_back(c[i] / denom);
         betas.push_back((d[i] + a[i] * betas[i-1]) / denom);
     }
     betas.push_back((d[n - 1] + a[n - 1] * betas[n - 2]) / (b[n-1] - a[n-1] * alphas[n - 2]));
-    std::vector<DT> SolutionX({betas[n-1]});
+    std::vector<double> SolutionX({betas[n-1]});
     for (int i = n - 2; i >= 0; --i)
     {
         SolutionX.push_back(alphas[i] * SolutionX[n - i - 2] + betas[i]);
@@ -106,14 +127,20 @@ double w(double a, double u_i, double u_im, double h) {
 //*******************IVAN's SANDBOX*************//
 
 // Случай 1 (линейное ур-е)
-bool FiniteScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ExpScheme"){
+bool FiniteScheme(double tau, double h, double sigma, PDE_data& test, std::string filename="ExpScheme"){
 
     // Физические параметры
     double c = test.c;
     double rho = test.rho;
     double t_0 = 0;
+    if(test.t0){
+        t_0 = test.t0;
+    }
     double T = test.T;
     double x_0 = 0;
+    if(test.x0){
+        x_0 = test.x0;
+    }
     double X = test.L;
 
     // Шаги по времени и пространству
@@ -272,14 +299,20 @@ vector<double> TripleBigRelaxSolve(const vector<double>& a, const vector<double>
 
 // Случай 2 (квазилинейное уравнение)
 bool
-IterationScheme(double tau, double h, double sigma, PDE_data test, string filename = "ImpScheme", double d = 1e-6) {
+IterationScheme(double tau, double h, double sigma, PDE_data& test, string filename = "ImpScheme", double d = 1e-6) {
 
     // Физические параметры
     double c = test.c;
     double rho = test.rho;
     double t_0 = 0;
+    if(test.t0){
+        t_0 = test.t0;
+    }
     double T = test.T;
     double x_0 = 0;
+    if(test.x0){
+        x_0 = test.x0;
+    }
     double X = test.L;
 
     // Шаги по времени и пространству
@@ -365,11 +398,11 @@ IterationScheme(double tau, double h, double sigma, PDE_data test, string filena
                     Cs[i] = (As[i] + Bs[i] + c * rho * h / tau);
                     Fs[i] = (c * rho * h / tau * state_i[i] +
                              (1 - sigma) *
-                             (w(a_ip, state_i[i + 1], state_ipp[i], h) - w(a_i, state_ipp[i], state_ipp[i - 1], h)));
+                             (w(a_ip, state_ipp[i + 1], state_ipp[i], h) - w(a_i, state_ipp[i], state_ipp[i - 1], h)));
 
                 }
                 // Получение нового состояния системы
-                //state_i = TripleBigRelaxSolve(As, Cs, Bs, Fs, state_i);
+                //state_ipp = TripleBigRelaxSolve(As, Cs, Bs, Fs, state_i);
                 state_ipp = TridiagonalMatrixAlgorithm(As, Cs, Bs, Fs);
                 // Запись в файл
             }
@@ -386,7 +419,7 @@ IterationScheme(double tau, double h, double sigma, PDE_data test, string filena
 
 
 //Для определения числа итераций "до сходимости"
-bool infoIterationScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ImpScheme", double EPS=1e-12){
+bool infoIterationScheme(double tau, double h, double sigma, PDE_data test, std::string filename="ImpScheme", double EPS=1e-17){
 
     // Физические параметры
     double c = test.c;
@@ -426,6 +459,7 @@ bool infoIterationScheme(double tau, double h, double sigma, PDE_data test, std:
             double t_i = t_0;
             std::vector<double> state_i = state_0;
             std::vector<double> state_ipp = state_i;
+            std::vector<double> state_ipp_copy = state_ipp;
             writeVectorToFile(fpoints, t_i, state_i);
             double x_i = x_0;
             int iter_counter = 0;
@@ -434,7 +468,7 @@ bool infoIterationScheme(double tau, double h, double sigma, PDE_data test, std:
                 t_i += tau;
                 iter_counter = 0;
                 do {
-                    //state_i = state_ipp;
+                    state_ipp_copy = state_ipp;
                     // Граничные условия слева
                     // 1-го рода
                     if (!test.G_left_type) {
@@ -495,7 +529,11 @@ bool infoIterationScheme(double tau, double h, double sigma, PDE_data test, std:
                     //state_ipp = TripleBigRelaxSolve(As, (-1.)*Cs, Bs, (-1.)*Fs, state_i);
                     state_ipp = TridiagonalMatrixAlgorithm(As, Cs, Bs, Fs);
                     ++iter_counter;
-                } while (norm(state_ipp - state_i) >= EPS);
+                    if(iter_counter > 1000){
+                        break;
+                    }
+                    //std::cout << "--- norm betweeen = " << std::setprecision(16)<<vec_norm(state_i-state_ipp) << std::endl;
+                } while (vec_norm((-1.)*state_ipp_copy + state_ipp) >= EPS);
                 //std::cout << "Iterations on time-step" << t_i << " is " << iter_counter << std::endl;
 
                 // Запись в файл итераций

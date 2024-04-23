@@ -42,7 +42,7 @@ int main() {
     test1.set_K([&](double x, double u) { return ALUMINUM_K; });
     test1.K_type = false;
     if(!test1.K_type) {
-        FiniteScheme(test1.tau, test1.h,0.,test1,"test1");
+        FiniteScheme(test1.tau, test1.h,0.5,test1,"test1");
     } else {
         IterationScheme(test1.tau, test1.h, 1., test1, "test1_iterational");
     }
@@ -61,7 +61,7 @@ int main() {
     test2.u0 = 800.;
     test2.set_G_left([&](double x) { return test2.u0; });
     test2.G_left_type = false;
-    test2.set_G_right([&](double x) { return 0; });
+    test2.set_G_right([&](double x) { return 0.; });
     test2.G_right_type = true;
     test2.set_init_func([&](double x){ return test2.u0-500 - x*(test2.L-x); });
     test2.set_K([&](double x, double u) { return ALUMINUM_K; });
@@ -83,7 +83,7 @@ int main() {
     test3.u0 = sqrt(2*5*5/0.5);
     test3.set_G_left([&](double t) { return test3.u0*sqrt(t); });
     test3.G_left_type = false;
-    test3.set_G_right([&](double x) { return 0; });
+    test3.set_G_right([&](double x) { return 0.; });
     test3.G_right_type = true;
     test3.set_init_func([&](double x){ return 0.; });
     test3.set_K([&](double x, double u) { return 0.5*u*u; });
@@ -93,6 +93,31 @@ int main() {
     } else {
         infoIterationScheme(test3.tau, test3.h, 1., test3, "test3_iterational", 1e-10);
     }
+
+    /* Тест 4: Алюминий, теплоизоляция на концах */
+    PDE_data test4;
+    test4.c = ALUMINUM_C;
+    test4.rho = ALUMINUM_RHO;
+    test4.h = 0.005;
+    test4.L = 1.;
+    test4.tau = 0.0002;
+    //test1.tau = 14;
+    test4.T = 1.;
+    test4.u0 = 800.;
+    test4.set_G_left([&](double t) {return 0.;});
+    test4.G_left_type = true;
+    test4.set_G_right([&](double t) { return 0.; });
+    test4.G_right_type = true;
+    test4.set_init_func([&](double x){ return test4.u0-500 - x*(test4.L-x); });
+    test4.set_K([&](double x, double u) { return ALUMINUM_K; });
+    test4.K_type = false;
+    if(!test4.K_type) {
+        FiniteScheme(test4.tau, test4.h,0.5,test4,"test4-sigma05");
+    } else {
+        IterationScheme(test4.tau, test4.h, 1., test4, "test4_iterational");
+    }
+    test4.show(); // Вывод информации о тесте
+
 
     /* Тест: Вариант 5 */
     PDE_data test5;

@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Main" type="CppFileRunConfiguration" factoryName="CppFileRunConfiguration" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$PROJECT_DIR$/Programms/Code" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Numerical_Methods_LAB2" TARGET_NAME="main.cpp - MinGW" CONFIG_NAME="Main">
-    <option name="sourceFile" value="C:\Users\gerce\Documents\WORK DIRECTORY\Численные методы\Лабораторные работы\Numerical_Methods_LAB2\Programms\Code\main.cpp" />
+  <configuration default="false" name="Main" type="CppFileRunConfiguration" factoryName="CppFileRunConfiguration" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$PROJECT_DIR$/Programms/Code" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Code" TARGET_NAME="main.cpp - MinGW" CONFIG_NAME="Main">
+    <option name="sourceFile" value="D:\BMSTU\3 COURSE\6th term\Numeric Methods\Lab2\Code\Programms\Code\main.cpp" />
     <option name="toolchainName" value="MinGW" />
     <method v="2">
       <option name="com.jetbrains.cidr.cpp.runfile.CppFileBuildBeforeRunTaskProvider$BasicBuildBeforeRunTask" enabled="true" />

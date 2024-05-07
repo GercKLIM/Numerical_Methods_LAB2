@@ -128,7 +128,7 @@ double w(double a, double u_i, double u_im, double h) {
 
 // Случай 1 (линейное ур-е)
 bool FiniteScheme(double tau, double h, double sigma, PDE_data& test, std::string filename="ExpScheme"){
-
+    double max_a = 0.;
     // Физические параметры
     double c = test.c;
     double rho = test.rho;
@@ -191,6 +191,11 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data& test, std::strin
                 Bs[0] = kappa;
                 As[0] = 0;
                 Fs[0] = mu;
+
+                if(max_a < fabs(a1))
+                {
+                    max_a = fabs(a1);
+                }
             }
 
             // Граничные условия справа
@@ -213,6 +218,10 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data& test, std::strin
                 Bs[num_space_steps] = 0.;
                 As[num_space_steps] = kappa;
                 Fs[num_space_steps] = mu;
+                if(max_a < fabs(am))
+                {
+                    max_a = fabs(am);
+                }
             }
 
             // Обход пространства
@@ -220,6 +229,14 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data& test, std::strin
                 x_i += h;
                 double a_i = a(test.K_ptr, x_i, x_i - h);
                 double a_ip = a(test.K_ptr, x_i + h, x_i);
+                if(max_a < fabs(a_i))
+                {
+                    max_a = fabs(a_i);
+                }
+                if(max_a < fabs(a_ip))
+                {
+                    max_a = fabs(a_ip);
+                }
                 As[i] = sigma / h * a_i;
                 Bs[i] = sigma / h * a_ip;
                 Cs[i] = As[i] + Bs[i] + c * rho * h / tau;
@@ -235,6 +252,7 @@ bool FiniteScheme(double tau, double h, double sigma, PDE_data& test, std::strin
             writeVectorToFile(fpoints, t_i, state_i);
         }
         fpoints.close();
+        std::cout << "!!!!!MAX A = " << max_a << std::endl;
         return true;
 
     } else {

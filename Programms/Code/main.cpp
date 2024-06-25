@@ -53,7 +53,8 @@ void test1() {
     test1.set_G_right([&](double x) { return test1.u0; });
     test1.G_right_type = false;
     test1.set_init_func([&](double x) { return test1.u0 - 500 - x * (test1.L - x); });
-    test1.set_K([&](double x, double u) { return 237 * (1 + 0.0034 * (u - 293)); });
+//    test1.set_K([&](double x, double u) { return 237 * (1 + 0.0034 * (u - 293)); });
+    test1.set_K([&](double x, double u) { return - test1.u0 - 500 - x * (test1.L - x); });
     test1.K_type = true; //Решаем итерационным методом
     if (!test1.K_type) {
         FiniteScheme(test1.tau, test1.h, 1., test1, "test1");
@@ -317,17 +318,17 @@ void make_data_for_tables() {
         double tau = 0.2;
         double h = 0.2;
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 7; i++) {
 
             double sigma = sigmas[n];
             test0.tau = tau;
             test0.h = h;
-            FiniteScheme(test0.tau, test0.h, sigma, test0, "data_for_tables/test0/sigma_" + to_string(n) + "/test0_" + to_string(i) + ".txt");
+            FiniteScheme(test0.tau, test0.h, sigma, test0, "data_for_tables/test0_2/sigma_" + to_string(n) + "/test0_" + to_string(i) + ".txt");
 
             // Обновляем шаги
             if (n == 1) {
-                tau = tau / 4.;
-                h = h / 4.;
+                tau = tau / 2.;
+                h = h / 2.;
             } else {
                 tau = tau / 4.;
                 h = h / 2.;
@@ -351,6 +352,6 @@ void make_data_for_tables() {
 int main(){
     //programm();
     make_data_for_tables();
-
+    std::cout << "Complete!" << std::endl;
     return 0;
 }
